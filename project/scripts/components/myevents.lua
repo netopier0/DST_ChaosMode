@@ -22,6 +22,15 @@ local function givePlayerItem(item, count)
     end
 end
 
+local function findPrefabs(prefab)
+    local ents = GLOBAL.Ents
+    for k,v in pairs(ents) do
+        if v.prefab == prefab then
+            return v
+        end
+    end
+end
+
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,6 +72,38 @@ local function hideCrafting(rev)
     end
     player.HUD.controls.craftingmenu:Close()
     player.HUD.controls.craftingmenu:Hide()
+end
+
+
+--[[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------- Position change -----------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]
+
+
+local function teleportRandom(rev)
+    if rev then return end
+    local w, h = TheWorld.Map:GetSize()
+	w = (w - w/2) * TILE_SCALE
+	h = (h - h/2) * TILE_SCALE
+	local x, z = math.random() * w * 2, math.random() * h * 2
+    while TheWorld.Map:IsOceanAtPoint(x - w, 0, z - h) or
+        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 1 or     --Outside of map 
+        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 65535 do --IMPASSABLE = 1, INVALID = 65535,
+		    x, z = math.random() * w * 2, math.random() * h * 2
+	end
+    player.Transform:SetPosition(x - w, 0, z - h)
+end
+
+local function teleportSpawn(rev)
+    if rev then return end
+    local inst = findPrefabs("multiplayer_portal")
+    if inst == nil then
+        inst = findPrefabs("multiplayer_portal_moonrock")
+    end
+    local x, y, z = inst.Transform:GetWorldPosition()
+    player.Transform:SetPosition(x, y, z)
 end
 
 
@@ -294,6 +335,21 @@ local function moveUp(rev)
     end)
 end
 
+local function speedup(rev)
+    if rev then
+        player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 1)
+        return
+    end
+    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 2)
+end
+
+local function slowdown(rev)
+    if rev then
+        player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 1)
+        return
+    end
+    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 0.5)
+end
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -385,6 +441,14 @@ local function treesAttackRange(rev)
     inst:StartMonster(true)
 end
 
+local function fruitFly(rev)
+    if rev then return end
+    local x, y, z = player:GetPosition():Get()
+    local ents = GLOBAL.Ents
+    local inst = ents[TheSim:SpawnPrefab("lordfruitfly")]
+    inst.Transform:SetPosition(x, y, z)
+end
+
 local function spawnButterflies(rev)
     if rev then return end
     local x, y, z = player:GetPosition():Get()
@@ -396,6 +460,10 @@ local function spawnButterflies(rev)
     end
 end
 
+local function treasureChest(rev)
+    if rev then return end
+    
+end
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,8 +503,8 @@ local MagicEvents = Class(function (self)
     --]==]
     
     -- to test: hideCrafting, GrowGiant, GrowTiny
-    self.random_events = {shuffleInventory, moveUp, moveUp}
-    self.random_events_names = {"shuffleInventory", "moveUp", "moveUp"}
+    self.random_events = {shuffleInventory, teleportSpawn, speedup}
+    self.random_events_names = {"shuffleInventory", "teleportSpawn", "speedup"}
     --[==[
     --TODO Change Names of events
     self.random_events_names = {"GrowGiant", "GrowTiny", "hideCrafting", --[[oneHealth,]] "halfHealth", "fullHealth", 
@@ -461,7 +529,8 @@ local random_events_names = {"GrowGiant", "GrowTiny", --[[oneHealth,]] "halfHeal
 ]=]
 
 function MagicEvents:generate_random_event()
-    --TODO set math.randomseed()
+    --TODO set 
+    math.randomseed( os.time() )
     local x = math.random(#self.random_events)
     self.curr_events[1] = self.random_events[x]
     self.curr_events_names[1] = self.random_events_names[x]
