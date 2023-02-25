@@ -16,16 +16,21 @@ local vote_counts = {}
 local vote_participants = {}
 local loop_counter = 0
 local option_window = {}
+local vote_option_widget = {}
 local options = {}
 local transfer_file = "textak.txt"
 
 --TMP functions
 local function k()
-    myevents:execute_random_event(1)
+    local op1, op2 = myevents:execute_random_event(1)
+    options[1] = op1
+    options[2] = op2
 end
 
 local function l()
-    myevents:execute_random_event(2)
+    local op1, op2 = myevents:execute_random_event(2)
+    options[1] = op1
+    options[2] = op2
 end
 
 --vote counter
@@ -131,6 +136,47 @@ end
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_HOME, k)
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_END, l)
 
+local function VoteWidgetPosition(controls, screensize, pos)
+    local hudscale = controls.top_root:GetScale()
+    local screen_w_full, screen_h_full = GLOBAL.unpack(screensize)
+    local screen_w = screen_w_full/hudscale.x
+    local screen_h = screen_h_full/hudscale.y
+
+    local position_x = (-1 * controls.vote_widget[pos].coordssize.w / 2)
+        + (1 * screen_w / 2) + (-1 * 250)
+    local position_y = (-1 * controls.vote_widget[pos].coordssize.h / 2)
+        + (0 * screen_h / 2) + (-1 * 25) + (-1 * 50 * pos)
+
+controls.vote_widget[pos]:SetPosition(position_x, position_y, 0)
+end
+
+local function DisplayVotes(controls)
+    controls.inst:DoTaskInTime(0, function ()
+        local VoteWidget = require "widgets/voting"
+        controls.vote_widget = {}
+
+        for i=1, 2 do
+            controls.vote_widget[i] = controls.top_root:AddChild(VoteWidget(1))
+            local screensize = {GLOBAL.TheSim:GetScreenSize()}
+            VoteWidgetPosition(controls, screensize, i)
+
+            local OnUpdate_base = controls.OnUpdate
+            controls.OnUpdate = function (self, dt)
+                OnUpdate_base(self, dt)
+
+                local votesString = i .. ": " .. (options[i] or "Error") .. " " .. (vote_counts[tostring(i)] or "0")
+                controls.vote_widget[i].button:SetText(votesString)
+
+                local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
+                if curscreensize[i] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
+                    VoteWidgetPosition(controls, curscreensize, i)
+                    screensize = curscreensize
+                end
+            end
+        end
+        vote_option_widget = controls.vote_widget
+    end)
+end
 
 AddPrefabPostInit("world", function (inst)
     inst:DoPeriodicTask(3, function ()
@@ -147,3 +193,5 @@ AddPrefabPostInit("world", function (inst)
         end
     end)
   end)
+
+AddClassPostConstruct("widgets/controls", DisplayVotes)

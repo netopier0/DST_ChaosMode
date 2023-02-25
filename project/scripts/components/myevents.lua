@@ -3,6 +3,8 @@ local net = GLOBAL.TheNet
 local player = GLOBAL.AllPlayers[1]
 
 local event_holder = nil
+local last_positions = nil
+local last_item = nil
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,6 +21,9 @@ local function givePlayerItem(item, count)
             return
         end
         player.components.inventory:GiveItem(inst)
+        if count == 1 or count == nil then
+            return inst
+        end
     end
 end
 
@@ -106,6 +111,32 @@ local function teleportSpawn(rev)
     player.Transform:SetPosition(x, y, z)
 end
 
+local function teleportLag(rev)
+    if rev then
+        if event_holder ~= nil then
+            event_holder:Cancel()
+            event_holder = nil
+        end
+        last_positions = nil
+        return
+    end
+    last_positions = {}
+    event_holder = player:DoPeriodicTask(0.5, function()
+        last_positions[#last_positions+1] = {player:GetPosition():Get()}
+        if math.random() < .5 and 3 < #last_positions then
+            local back_index = math.random(1, math.min(#last_positions - 1, 10))
+            local tmp = last_positions[#last_positions - back_index]
+            player.Transform:SetPosition(tmp[1], tmp[2], tmp[3])
+        end
+    end)
+end
+
+local function teleportHermit(rev)
+    if rev then return end
+    local inst = findPrefabs("hermitcrab")
+    local x, y, z = inst.Transform:GetWorldPosition()
+    player.Transform:SetPosition(x, y, z)
+end
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,7 +352,22 @@ local function sanityRegen(rev)
     end)
 end
 
-local function moveUp(rev)
+local function poison(rev)
+    if rev then
+        if event_holder ~= nil then
+            event_holder:Cancel()
+            event_holder = nil
+        end
+        return
+    end
+    event_holder = player:DoPeriodicTask(1.5, function()
+        if player.components.health:GetPercent() > 0.01 then
+            player.components.health:SetPercent(player.components.health:GetPercent() - 0.01)
+        end
+    end)
+end
+
+local function keepMoving(rev)
     if rev then
         if event_holder ~= nil then
             event_holder:Cancel()
@@ -389,6 +435,21 @@ local function rainingFrogs(rev)
         inst.sg:GoToState("fall")
         inst.Transform:SetPosition(x + math.random(-15, 15), 35, z + math.random(-15, 15))
     end)
+end
+
+local function rain(rev)
+    if rev then return end
+    TheWorld:PushEvent("ms_forceprecipitation")
+end
+
+local function nightFalls(rev)
+    if rev then return end
+    TheWorld:PushEvent("ms_setphase", "night")
+end
+
+local function wakeUp(rev)
+    if rev then return end
+    TheWorld:PushEvent("ms_nextcycle")
 end
 
 
@@ -460,9 +521,42 @@ local function spawnButterflies(rev)
     end
 end
 
-local function treasureChest(rev)
+local function spawnHounds(rev)
     if rev then return end
-    
+    local x, y, z = player:GetPosition():Get()
+    local hounds = {"hound", "firehound", "icehound"}
+    local ents = GLOBAL.Ents
+    local inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
+    inst.Transform:SetPosition(x + 10, y, z)
+    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
+    inst.Transform:SetPosition(x - 10, y, z)
+    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
+    inst.Transform:SetPosition(x, y, z + 10)
+    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
+    inst.Transform:SetPosition(x, y, z - 10)
+end
+
+local function bonusChest(rev)
+    if rev then
+        last_item:Remove()
+        last_item = nil
+        return end
+    local w, h = TheWorld.Map:GetSize()
+	w = (w - w/2) * TILE_SCALE
+	h = (h - h/2) * TILE_SCALE
+	local x, z = math.random() * w * 2, math.random() * h * 2
+    while TheWorld.Map:IsOceanAtPoint(x - w, 0, z - h) or
+        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 1 or     --Outside of map 
+        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 65535 do --IMPASSABLE = 1, INVALID = 65535,
+		    x, z = math.random() * w * 2, math.random() * h * 2
+	end
+    local ents = GLOBAL.Ents
+    local inst = ents[TheSim:SpawnPrefab("treasurechest")]
+    inst.Transform:SetPosition(x - w, 0, z - h)
+
+    inst.components.container:GiveItem(ents[TheSim:SpawnPrefab("axe")]) --TODO
+    print(x - w, z - h) --TODO
+    last_item = inst
 end
 
 --[[
@@ -487,6 +581,32 @@ local function shrooms(rev)
     givePlayerItem("blue_cap", 10)
 end
 
+local function fakeGoldTools(rev)
+    if rev then return end
+    local inst = givePlayerItem("goldenaxe", 1)
+    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+    inst = givePlayerItem("goldenpickaxe", 1)
+    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+    inst = givePlayerItem("goldenshovel", 1)
+    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+end
+
+local function nightVisionEffect(rev)
+    if rev then
+        if last_item ~= nil then
+            last_item:Remove()
+            last_item = nil
+        end
+        return
+    end
+    local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
+    if curr_item ~= nil then
+        player.components.inventory:DropItem(curr_item)
+    end
+    last_item = givePlayerItem("molehat")
+    player.components.inventory:Equip(last_item)
+end
+
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 --------------- Class declaration ----------------
@@ -501,10 +621,9 @@ local MagicEvents = Class(function (self)
     dropInventory, dropHand, dropArmour, shuffleInventory, makeCold, makeHot, makeWeak, makeStrong,
     treePrison, treesAttackClose, treesAttackRange, spawnButterflies}
     --]==]
-    
-    -- to test: hideCrafting, GrowGiant, GrowTiny
-    self.random_events = {shuffleInventory, teleportSpawn, speedup}
-    self.random_events_names = {"shuffleInventory", "teleportSpawn", "speedup"}
+
+    self.random_events = {shuffleInventory, teleportSpawn, teleportLag, nightVisionEffect, bonusChest}
+    self.random_events_names = {"shuffleInventory", "teleportSpawn", "teleportLag", "nightVisionEffect", "bonusChest"}
     --[==[
     --TODO Change Names of events
     self.random_events_names = {"GrowGiant", "GrowTiny", "hideCrafting", --[[oneHealth,]] "halfHealth", "fullHealth", 
