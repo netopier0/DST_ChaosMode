@@ -18,19 +18,24 @@ local loop_counter = 0
 local option_window = {}
 local vote_option_widget = {}
 local options = {}
+local num_of_options = 4
 local transfer_file = "textak.txt"
 
 --TMP functions
 local function k()
-    local op1, op2 = myevents:execute_random_event(1)
-    options[1] = op1
-    options[2] = op2
+    options = myevents:execute_random_event(1)
 end
 
 local function l()
-    local op1, op2 = myevents:execute_random_event(2)
-    options[1] = op1
-    options[2] = op2
+    options = myevents:execute_random_event(2)
+end
+
+local function m()
+    options = myevents:execute_random_event(3)
+end
+
+local function n()
+    options = myevents:execute_random_event(4)
 end
 
 --vote counter
@@ -98,6 +103,23 @@ end
 
 local function resolve_votes()
     print("Resolve_votes")
+
+    if #options == 0 then
+        options = myevents:execute_random_event()
+        return
+    end
+
+    local vote_option = math.random(num_of_options)
+    local max_votes = -1
+
+    for i = 1, num_of_options do
+        if max_votes < (vote_counts[tostring(i)] or -1) then
+            max_votes = vote_counts[tostring(i)]
+            vote_option = i
+        end
+    end
+
+    --[[
     local vote_option = 1
     if vote_counts["1"] == nil then
         vote_option = 2
@@ -109,32 +131,37 @@ local function resolve_votes()
         vote_option = 2
     end
 
+    --]]
+
     vote_counts = {}
     vote_participants = {}
 
+     --[[
     if option_window[1] == nil then
         option_window[1] = button_create("text", 1835, 800, 1, 1)
     end
     if option_window[2] == nil then
         option_window[2] = button_create("text", 1835, 760, 1, 1)
     end
+    ]]
 
-    local op1, op2 = myevents:execute_random_event(vote_option)
-    options[1] = op1
-    options[2] = op2
+    options = myevents:execute_random_event(vote_option)
+
 
     --Button position is currenty stationary and visible in the right corner only when in full screen mode
     --TODO change in future
     --set_button_position(option_window[1], 1835, 800)
     --set_button_position(option_window[2], 1835, 760)
 
-    update_button_text()
+    --update_button_text()
 
 end
 
 --for testing purposes, delete in future
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_HOME, k)
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_END, l)
+GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_PAGEUP, m)
+GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_PAGEDOWN, n)
 
 local function VoteWidgetPosition(controls, screensize, pos)
     local hudscale = controls.top_root:GetScale()
@@ -143,19 +170,20 @@ local function VoteWidgetPosition(controls, screensize, pos)
     local screen_h = screen_h_full/hudscale.y
 
     local position_x = (-1 * controls.vote_widget[pos].coordssize.w / 2)
-        + (1 * screen_w / 2) + (-1 * 250)
+        + (1 * screen_w / 2) + (-1 * 150)
     local position_y = (-1 * controls.vote_widget[pos].coordssize.h / 2)
-        + (0 * screen_h / 2) + (-1 * 25) + (-1 * 50 * pos)
+        + (0 * screen_h / 2) + (-1 * -40) + (-1 * 50 * pos)
 
 controls.vote_widget[pos]:SetPosition(position_x, position_y, 0)
 end
 
 local function DisplayVotes(controls)
     controls.inst:DoTaskInTime(0, function ()
+        options = myevents:execute_random_event() -- Initialize events
         local VoteWidget = require "widgets/voting"
         controls.vote_widget = {}
 
-        for i=1, 2 do
+        for i=1, num_of_options do
             controls.vote_widget[i] = controls.top_root:AddChild(VoteWidget(1))
             local screensize = {GLOBAL.TheSim:GetScreenSize()}
             VoteWidgetPosition(controls, screensize, i)
@@ -168,7 +196,7 @@ local function DisplayVotes(controls)
                 controls.vote_widget[i].button:SetText(votesString)
 
                 local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
-                if curscreensize[i] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
+                if curscreensize[1] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
                     VoteWidgetPosition(controls, curscreensize, i)
                     screensize = curscreensize
                 end
@@ -179,15 +207,17 @@ local function DisplayVotes(controls)
 end
 
 AddPrefabPostInit("world", function (inst)
-    inst:DoPeriodicTask(3, function ()
+    inst:DoPeriodicTask(1, function ()
         --if used to get first set of effects
+        --[[
         if loop_counter == 0 then
             resolve_votes()
         end
+        --]]
         brain()
-        update_button_text()
+        --update_button_text()
         loop_counter = loop_counter + 1
-        if loop_counter == 121 then -- base counter = 11
+        if loop_counter == 301 then -- base counter = 11
             resolve_votes()
             loop_counter = 1
         end

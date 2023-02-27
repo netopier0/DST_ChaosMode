@@ -5,6 +5,7 @@ local player = GLOBAL.AllPlayers[1]
 local event_holder = nil
 local last_positions = nil
 local last_item = nil
+local last_tile = {}
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,6 +35,28 @@ local function findPrefabs(prefab)
             return v
         end
     end
+end
+
+local function generateRandomNumbers(range, n)
+    if range < n then
+        return {}
+    end
+    math.randomseed(os.time())
+    local result = {}
+    while #result ~= n do
+        local add = true
+        local curr = math.random(range)
+        for _, v in pairs(result) do
+            if v == curr then
+                add = false
+                break
+            end
+        end
+        if add then
+            result[#result+1] = curr
+        end
+    end
+    return result
 end
 
 
@@ -166,6 +189,13 @@ local function oneHealth(rev)
     net:Announce(chat_string)
 end
 
+local function randomHealth(rev)
+    if rev then return end
+    player.components.health:SetPercent(math.random())
+    local chat_string = "Random Hp"
+    net:Announce(chat_string)
+end
+
 local function fullSanity(rev)
     if rev then return end
     player.components.sanity:SetPercent(1)
@@ -188,6 +218,13 @@ local function zeroSanity(rev)
     net:Announce(chat_string)
 end
 
+local function randomSanity(rev)
+    if rev then return end
+    player.components.sanity:SetPercent(math.random())
+    local chat_string = "Random sanity"
+    net:Announce(chat_string)
+end
+
 local function fullHunger(rev)
     if rev then return end
     player.components.hunger:SetPercent(1)
@@ -206,6 +243,13 @@ local function zeroHunger(rev)
     if rev then return end
     player.components.hunger:SetPercent(0.000001)
     local chat_string = "zero hunger"
+    net:Announce(chat_string)
+end
+
+local function randomHunger(rev)
+    if rev then return end
+    player.components.hunger:SetPercent(math.random())
+    local chat_string = "Random hunger"
     net:Announce(chat_string)
 end
 
@@ -252,7 +296,7 @@ local function shuffleInventory(rev)
     if rev then return end
     local current_inventory = {}
     --Load items
-    for i = 1,15 do
+    for i = 1, 15 do
         current_inventory[i] = player.components.inventory:RemoveItemBySlot(i)
     end
     --Shuffle items
@@ -262,7 +306,7 @@ local function shuffleInventory(rev)
         current_inventory[x], current_inventory[y] = current_inventory[y], current_inventory[x]
     end
     --Store items
-    for i = 1,15 do
+    for i = 1, 15 do
         if current_inventory[i] ~= nil then
             player.components.inventory:GiveItem(current_inventory[i], i)
         end
@@ -452,6 +496,25 @@ local function wakeUp(rev)
     TheWorld:PushEvent("ms_nextcycle")
 end
 
+local function tileChanger(rev)
+    if rev then
+        if event_holder ~= nil then
+            event_holder:Cancel()
+            event_holder = nil
+        end
+        last_tile = {}
+        return
+    end
+    local useable_tile_list = {2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,30,31,32,35,36,37,38,39,41,42,43,44,45,46,47}
+    event_holder = player:DoPeriodicTask(0.25, function ()
+        local x, y = TheWorld.Map:GetTileCoordsAtPoint(TheWorld.Map:GetTileCenterPoint(player:GetPosition():Get()))
+        if not TheWorld.Map:IsOceanAtPoint(TheWorld.Map:GetTileCenterPoint(player:GetPosition():Get())) and (last_tile[1] ~= x or last_tile[2] ~= y) then
+            last_tile = {x, y}
+            TheWorld.Map:SetTile(x, y, useable_tile_list[math.random(#useable_tile_list)])
+        end
+    end)
+end
+
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -483,6 +546,19 @@ local function treePrison(rev)
     inst.Transform:SetPosition(x, y, z-2)
     inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
     inst.Transform:SetPosition(x+1, y, z-1)
+end
+
+local function spawnEvilFlowers(rev)
+    if rev then return end
+    local x, y, z = player:GetPosition():Get()
+    local ents = GLOBAL.Ents
+    local inst = nil
+    for i = -2, 2 do
+        for j = -2, 2 do
+            inst = ents[TheSim:SpawnPrefab("flower_evil")]
+            inst.Transform:SetPosition(x+i*2, y, z+j*2)
+        end
+    end
 end
 
 local function treesAttackClose(rev)
@@ -536,6 +612,35 @@ local function spawnHounds(rev)
     inst.Transform:SetPosition(x, y, z - 10)
 end
 
+local function spawnTentacles(rev)
+    if rev then return end
+    local x, y, z = player:GetPosition():Get()
+    local ents = GLOBAL.Ents
+    local inst = ents[TheSim:SpawnPrefab("tentacle")]
+    inst.Transform:SetPosition(x + 2, y, z)
+    inst = ents[TheSim:SpawnPrefab("tentacle")]
+    inst.Transform:SetPosition(x - 2, y, z)
+    inst = ents[TheSim:SpawnPrefab("tentacle")]
+    inst.Transform:SetPosition(x, y, z + 2)
+    inst = ents[TheSim:SpawnPrefab("tentacle")]
+    inst.Transform:SetPosition(x, y, z - 2)
+    x, y = TheWorld.Map:GetTileCoordsAtPoint(TheWorld.Map:GetTileCenterPoint(x, y, z))
+    for i = -1, 1 do
+        for j = -1, 1 do
+            --TODO Ošetrit ocean
+            TheWorld.Map:SetTile(x + i, y + j, 8)
+        end
+    end
+end
+
+local function spawnSheep(rev)
+    if rev then return end
+    local x, y, z = player:GetPosition():Get()
+    local ents = GLOBAL.Ents
+    local inst = ents[TheSim:SpawnPrefab("spat")]
+    inst.Transform:SetPosition(x + 2, y, z)
+end
+
 local function bonusChest(rev)
     if rev then
         last_item:Remove()
@@ -584,11 +689,11 @@ end
 local function fakeGoldTools(rev)
     if rev then return end
     local inst = givePlayerItem("goldenaxe", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
     inst = givePlayerItem("goldenpickaxe", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
     inst = givePlayerItem("goldenshovel", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(1) end
+    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
 end
 
 local function nightVisionEffect(rev)
@@ -622,8 +727,9 @@ local MagicEvents = Class(function (self)
     treePrison, treesAttackClose, treesAttackRange, spawnButterflies}
     --]==]
 
-    self.random_events = {shuffleInventory, teleportSpawn, teleportLag, nightVisionEffect, bonusChest}
-    self.random_events_names = {"shuffleInventory", "teleportSpawn", "teleportLag", "nightVisionEffect", "bonusChest"}
+    --TODO test
+    self.random_events = {shuffleInventory, teleportLag, tileChanger, speedup}
+    self.random_events_names = {"shuffleInventory", "teleportLag", "tileChanger", "speedup"}
     --[==[
     --TODO Change Names of events
     self.random_events_names = {"GrowGiant", "GrowTiny", "hideCrafting", --[[oneHealth,]] "halfHealth", "fullHealth", 
@@ -649,6 +755,7 @@ local random_events_names = {"GrowGiant", "GrowTiny", --[[oneHealth,]] "halfHeal
 
 function MagicEvents:generate_random_event()
     --TODO set 
+    --[=[
     math.randomseed( os.time() )
     local x = math.random(#self.random_events)
     self.curr_events[1] = self.random_events[x]
@@ -659,15 +766,22 @@ function MagicEvents:generate_random_event()
         self.curr_events[2] = self.random_events[x]
         self.curr_events_names[2] = self.random_events_names[x]
     end
+    --]=]
+    local numbers = generateRandomNumbers(#self.random_events, 4)
+    for k, v in ipairs(numbers) do
+        self.curr_events[k] = self.random_events[v]
+        self.curr_events_names[k] = self.random_events_names[v]
+    end
 end
 
 function MagicEvents:execute_random_event(event_num)
+    --[[
     if self.curr_events == nil or #self.curr_events == 0 then
         player = GLOBAL.ThePlayer or GLOBAL.AllPlayers[1]
         self.generate_random_event(self)
-        net:Announce("1: " .. self.curr_events_names[1])
-        net:Announce("2: " .. self.curr_events_names[2])
-        return self.curr_events_names[1], self.curr_events_names[2]
+        --net:Announce("1: " .. self.curr_events_names[1])
+        --net:Announce("2: " .. self.curr_events_names[2])
+        return self.curr_events_names
     end
     if player == nil then
         print("Player == Nil")
@@ -675,13 +789,26 @@ function MagicEvents:execute_random_event(event_num)
     if self.last_event ~= nil then
         self.last_event("ret") -- Does not matter value, parameter just can't be nil
     end
-    self.curr_events[event_num](nil)
-    self.last_event = self.curr_events[event_num]
+    self.curr_events[event_num](nil) -- Execute_random_event
+    self.last_event = self.curr_events[event_num] -- Store last event
     self.generate_random_event(self)
-    net:Announce("1: " .. self.curr_events_names[1])
-    net:Announce("2: " .. self.curr_events_names[2])
+    --net:Announce("1: " .. self.curr_events_names[1])
+    --net:Announce("2: " .. self.curr_events_names[2])
+    --]]
 
-    return self.curr_events_names[1], self.curr_events_names[2]
+    player = GLOBAL.ThePlayer or GLOBAL.AllPlayers[1]
+    if event_num ~= nil then
+        if player == nil then
+            print("Player == nil")
+        end
+        if player ~= nil then
+            if self.last_event ~= nil then self.last_event("ret") end --Does not matter value, parameter just can't be nil
+            self.curr_events[event_num](nil) -- Execute chosen event
+            self.last_event = self.curr_events[event_num] -- Store last event
+        end
+    end
+    self.generate_random_event(self)
+    return self.curr_events_names
 end
 
 return MagicEvents()
