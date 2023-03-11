@@ -174,8 +174,23 @@ local function VoteWidgetPosition(controls, screensize, pos)
     local position_y = (-1 * controls.vote_widget[pos].coordssize.h / 2)
         + (0 * screen_h / 2) + (-1 * -40) + (-1 * 50 * pos)
 
-controls.vote_widget[pos]:SetPosition(position_x, position_y, 0)
+    controls.vote_widget[pos]:SetPosition(position_x, position_y, 0)
 end
+
+local function CountdownWidgetPosition(controls, screensize)
+    local hudscale = controls.top_root:GetScale()
+    local screen_w_full, screen_h_full = GLOBAL.unpack(screensize)
+    local screen_w = screen_w_full/hudscale.x
+    local screen_h = screen_h_full/hudscale.y
+
+    local position_x = (-1 * controls.time_widget.coordssize.w / 2)
+        + (1 * screen_w / 2) + (-1 * 150)
+    local position_y = (-1 * controls.time_widget.coordssize.h / 2)
+        + (0 * screen_h / 2) + (-1 * -40) + (-1 * 50 * 5)
+
+    controls.time_widget:SetPosition(position_x, position_y, 0)
+end
+
 
 local function DisplayVotes(controls)
     controls.inst:DoTaskInTime(0, function ()
@@ -204,6 +219,33 @@ local function DisplayVotes(controls)
         end
         vote_option_widget = controls.vote_widget
     end)
+
+
+    -- CountDown
+    controls.inst:DoTaskInTime(0, function ()
+        options = myevents:execute_random_event() -- Initialize events
+        local VoteWidget = require "widgets/voting"
+        controls.time_widget = nil
+
+        controls.time_widget  = controls.top_root:AddChild(VoteWidget(1))
+        local screensize = {GLOBAL.TheSim:GetScreenSize()}
+        CountdownWidgetPosition(controls, screensize)
+
+        local OnUpdate_base = controls.OnUpdate
+        controls.OnUpdate = function (self, dt)
+            OnUpdate_base(self, dt)
+
+            local votesString = 100 - loop_counter
+            controls.time_widget.button:SetText(votesString)
+
+            local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
+            if curscreensize[1] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
+                CountdownWidgetPosition(controls, curscreensize)
+                screensize = curscreensize
+            end
+        end
+
+    end)
 end
 
 AddPrefabPostInit("world", function (inst)
@@ -217,7 +259,7 @@ AddPrefabPostInit("world", function (inst)
         brain()
         --update_button_text()
         loop_counter = loop_counter + 1
-        if loop_counter == 301 then -- base counter = 11
+        if loop_counter == 100 then -- base counter = 11
             resolve_votes()
             loop_counter = 1
         end

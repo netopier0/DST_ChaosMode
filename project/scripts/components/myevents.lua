@@ -6,6 +6,8 @@ local event_holder = nil
 local last_positions = nil
 local last_item = nil
 local last_tile = {}
+local fn_player = 'local player = ThePlayer '
+
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,35 +15,22 @@ local last_tile = {}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]
 
-local function givePlayerItem(item, count)
-    local ents = GLOBAL.Ents
-    for i = 1, count or 1 do
-        local inst = ents[TheSim:SpawnPrefab(item)]
-        if inst == nil then
-            print("Cant spawn item" .. item)
-            return
-        end
-        player.components.inventory:GiveItem(inst)
-        if count == 1 or count == nil then
-            return inst
-        end
-    end
-end
+local findPrefabsStr = 'local function findPrefabs(prefab, dist) ' ..
+    'local x, y, z  = ThePlayer:GetPosition():Get() ' ..
+    'local ents = TheSim:FindEntities(x,y,z, dist) ' ..
+    'for k,v in pairs(ents) do ' ..
+        'if v.prefab == prefab then ' ..
+            'return v ' ..
+        'end ' ..
+    'end ' ..
+'end '
 
-local function findPrefabs(prefab)
-    local ents = GLOBAL.Ents
-    for k,v in pairs(ents) do
-        if v.prefab == prefab then
-            return v
-        end
-    end
-end
 
 local function generateRandomNumbers(range, n)
     if range < n then
         return {}
     end
-    math.randomseed(os.time())
+    --math.randomseed(os.time())
     local result = {}
     while #result ~= n do
         local add = true
@@ -59,6 +48,15 @@ local function generateRandomNumbers(range, n)
     return result
 end
 
+function SendCommand(fnstr)
+	local x, _, z = TheSim:ProjectScreenPos(TheSim:GetPosition())
+	local is_valid_time_to_use_remote = net:GetIsClient() and net:GetIsServerAdmin()
+	if is_valid_time_to_use_remote then
+		net:SendRemoteExecute(fnstr, x, z)
+	else
+		ExecuteConsoleCommand(fnstr)
+	end
+end
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,29 +66,21 @@ end
 
 
 local function GrowGiant(rev)
-    local size
-    if rev then
-        size = 1
-    else
-        size = 3
-        local chat_string = "Giant"
-        net:Announce(chat_string)
-    end
-    player.Transform:SetScale(size,size,size)
-    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEvents", 1 / size)
+    local fnstr = fn_player .. 'local size = '
+    if rev then fnstr = fnstr .. '1 ' else fnstr = fnstr .. '3 ' end
+    fnstr = fnstr .. 
+    'player.Transform:SetScale(size,size,size) ' ..
+    'player.components.locomotor:SetExternalSpeedMultiplier(player, "myEvents", 1 / size)'
+    SendCommand(fnstr)
 end
 
 local function GrowTiny(rev)
-    local size
-    if rev then
-        size = 1
-    else
-        size = 0.25
-        local chat_string = "Tiny"
-        net:Announce(chat_string)
-    end
-    player.Transform:SetScale(size,size,size)
-    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEvents", 1 / size)
+    local fnstr = fn_player .. 'local size = '
+    if rev then fnstr = fnstr .. '1 ' else fnstr = fnstr .. '0.25 ' end
+    fnstr = fnstr .. 
+    'player.Transform:SetScale(size,size,size) ' ..
+    'player.components.locomotor:SetExternalSpeedMultiplier(player, "myEvents", 1 / size)'
+    SendCommand(fnstr)
 end
 
 local function hideCrafting(rev)
@@ -109,29 +99,32 @@ end
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]
 
-
-local function teleportRandom(rev)
+--Not working with Lag Compensation: Predictive otherwise works fine
+local function  teleportRandom(rev)
     if rev then return end
-    local w, h = TheWorld.Map:GetSize()
-	w = (w - w/2) * TILE_SCALE
-	h = (h - h/2) * TILE_SCALE
-	local x, z = math.random() * w * 2, math.random() * h * 2
-    while TheWorld.Map:IsOceanAtPoint(x - w, 0, z - h) or
-        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 1 or     --Outside of map 
-        TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 65535 do --IMPASSABLE = 1, INVALID = 65535,
-		    x, z = math.random() * w * 2, math.random() * h * 2
-	end
-    player.Transform:SetPosition(x - w, 0, z - h)
+    local fnstr = fn_player ..
+    'local w, h = TheWorld.Map:GetSize() ' ..
+	'w = (w - w/2) * TILE_SCALE ' ..
+	'h = (h - h/2) * TILE_SCALE ' ..
+	'local x, z = math.random() * w * 2, math.random() * h * 2 ' ..
+    'while TheWorld.Map:IsOceanAtPoint(x - w, 0, z - h) or ' ..
+        'TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 1 or ' ..     --Outside of map 
+        'TheWorld.Map:GetTileAtPoint(x - w, 0, z - h) == 65535 do ' .. --IMPASSABLE = 1, INVALID = 65535,
+            'x, z = math.random() * w * 2, math.random() * h * 2 '..
+    'end ' ..
+    'player.Transform:SetPosition(x - w, 0, z - h)'
+    SendCommand(fnstr)
 end
 
+--Not working with Lag Compensation: Predictive otherwise works fine
 local function teleportSpawn(rev)
     if rev then return end
-    local inst = findPrefabs("multiplayer_portal")
-    if inst == nil then
-        inst = findPrefabs("multiplayer_portal_moonrock")
-    end
-    local x, y, z = inst.Transform:GetWorldPosition()
-    player.Transform:SetPosition(x, y, z)
+    local fnstr = findPrefabsStr .. fn_player ..
+    'local inst = findPrefabs("multiplayer_portal", 9001) ' ..
+    'if inst == nil then inst = findPrefabs("multiplayer_portal_moonrock", 9001) end ' ..
+    'local x, y, z = inst.Transform:GetWorldPosition() ' ..
+    'player.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
 local function teleportLag(rev)
@@ -149,16 +142,21 @@ local function teleportLag(rev)
         if math.random() < .5 and 3 < #last_positions then
             local back_index = math.random(1, math.min(#last_positions - 1, 10))
             local tmp = last_positions[#last_positions - back_index]
-            player.Transform:SetPosition(tmp[1], tmp[2], tmp[3])
+            local fnstr = fn_player .. 
+            'player.Transform:SetPosition( ' .. tmp[1] .. ', ' .. tmp[2] .. ', ' .. tmp[3] ..')'
+            SendCommand(fnstr)
         end
     end)
 end
 
+--Not working with Lag Compensation: Predictive otherwise works fine
 local function teleportHermit(rev)
     if rev then return end
-    local inst = findPrefabs("hermitcrab")
-    local x, y, z = inst.Transform:GetWorldPosition()
-    player.Transform:SetPosition(x, y, z)
+    local fnstr = findPrefabsStr .. fn_player .. 
+    'local inst = findPrefabs("hermitcrab", 9001) ' ..
+    'local x, y, z = inst.Transform:GetWorldPosition() ' ..
+    'player.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
 --[[
@@ -170,87 +168,110 @@ end
 
 local function fullHealth(rev)
     if rev then return end
-    player.components.health:SetPercent(1)
-    local chat_string = "Full heal"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.health:SetPercent(1) '
+    SendCommand(fnstr)
+    --local chat_string = "Full heal"
+    --net:Announce(chat_string)
 end
 
 local function halfHealth(rev)
     if rev then return end
-    player.components.health:SetPercent(0.5)
-    local chat_string = "Health = 50%"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.health:SetPercent(0.5)'
+    SendCommand(fnstr)
+    --local chat_string = "Health = 50%"
+    --net:Announce(chat_string)
 end
 
 local function oneHealth(rev)
     if rev then return end
-    player.components.health:SetPercent(0.001)
-    local chat_string = "one Hp"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.health:SetPercent(0.001)'
+    SendCommand(fnstr)
+    --local chat_string = "one Hp"
+    --net:Announce(chat_string)
 end
 
 local function randomHealth(rev)
     if rev then return end
-    player.components.health:SetPercent(math.random())
-    local chat_string = "Random Hp"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.health:SetPercent(math.random())'
+    SendCommand(fnstr)
+    --local chat_string = "Random Hp"
+    --net:Announce(chat_string)
 end
 
 local function fullSanity(rev)
     if rev then return end
-    player.components.sanity:SetPercent(1)
-    local chat_string = "Full sanity"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.sanity:SetPercent(1)'
+    SendCommand(fnstr)
+    --local chat_string = "Full sanity"
+    --net:Announce(chat_string)
 end
 
 local function halfSanity(rev)
     if rev then return end
-    --local player = GLOBAL.ThePlayer
-    player.components.sanity:SetPercent(0.5)
-    local chat_string = "sanity = 50%"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.sanity:SetPercent(0.5)'
+    SendCommand(fnstr)
+    --local chat_string = "sanity = 50%"
+    --net:Announce(chat_string)
 end
 
 local function zeroSanity(rev)
     if rev then return end
-    player.components.sanity:SetPercent(0.001)
-    local chat_string = "zero sanity"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.sanity:SetPercent(0.001)'
+    SendCommand(fnstr)
+    --local chat_string = "zero sanity"
+    --net:Announce(chat_string)
 end
 
 local function randomSanity(rev)
     if rev then return end
-    player.components.sanity:SetPercent(math.random())
-    local chat_string = "Random sanity"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.sanity:SetPercent(math.random())'
+    SendCommand(fnstr)
+    --local chat_string = "Random sanity"
+    --net:Announce(chat_string)
 end
 
 local function fullHunger(rev)
     if rev then return end
-    player.components.hunger:SetPercent(1)
-    local chat_string = "Full hunger"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.hunger:SetPercent(1)'
+    SendCommand(fnstr)
+    --local chat_string = "Full hunger"
+    --net:Announce(chat_string)
 end
 
 local function halfHunger(rev)
     if rev then return end
-    player.components.hunger:SetPercent(0.5)
-    local chat_string = "Hunger = 50%"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.hunger:SetPercent(0.5)'
+    SendCommand(fnstr)
+    --local chat_string = "Hunger = 50%"
+    --net:Announce(chat_string)
 end
 
 local function zeroHunger(rev)
     if rev then return end
-    player.components.hunger:SetPercent(0.000001)
-    local chat_string = "zero hunger"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.hunger:SetPercent(0.000001)'
+    SendCommand(fnstr)
+    --local chat_string = "zero hunger"
+    --net:Announce(chat_string)
 end
 
 local function randomHunger(rev)
     if rev then return end
-    player.components.hunger:SetPercent(math.random())
-    local chat_string = "Random hunger"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.hunger:SetPercent(math.random())'
+    SendCommand(fnstr)
+    --local chat_string = "Random hunger"
+    --net:Announce(chat_string)
 end
 
 
@@ -263,58 +284,72 @@ end
 
 local function dropInventory(rev)
     if rev then return end
-    player.components.inventory:DropEverything()
-    local chat_string = "Drop Inventory"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.inventory:DropEverything()'
+    SendCommand(fnstr)
+    --local chat_string = "Drop Inventory"
+    --net:Announce(chat_string)
 end
 
 local function dropHand(rev)
     if rev then return end
-    local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-    if curr_item ~= nil then
-        player.components.inventory:DropItem(curr_item)
-    end
-    local chat_string = "Drop Hands"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) ' ..
+    'if curr_item ~= nil then player.components.inventory:DropItem(curr_item) end'
+    SendCommand(fnstr)
+    --local chat_string = "Drop Hands"
+    --net:Announce(chat_string)
 end
 
 local function dropArmour(rev)
     if rev then return end
-    local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
-    if curr_item ~= nil then
-        player.components.inventory:DropItem(curr_item)
-    end
-    curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
-    if curr_item ~= nil then
-        player.components.inventory:DropItem(curr_item)
-    end
-    local chat_string = "Drop Armour"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD) ' ..
+    'if curr_item ~= nil then player.components.inventory:DropItem(curr_item) end ' ..
+    'curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY) ' ..
+    'if curr_item ~= nil then player.components.inventory:DropItem(curr_item) end'
+    SendCommand(fnstr)
+    --local chat_string = "Drop Armour"
+    --net:Announce(chat_string)
 end
 
 local function shuffleInventory(rev)
     if rev then return end
-    local current_inventory = {}
+    local fnstr = fn_player ..
+    'local current_inventory = {} ' ..
     --Load items
-    for i = 1, 15 do
-        current_inventory[i] = player.components.inventory:RemoveItemBySlot(i)
-    end
+    'for i = 1, 15 do ' ..
+        'current_inventory[i] = player.components.inventory:RemoveItemBySlot(i) ' ..
+    'end ' ..
     --Shuffle items
-    for i = 1, 50 do
-        local x = (i % 15) + 1
-        local y = math.random(x, 15)
-        current_inventory[x], current_inventory[y] = current_inventory[y], current_inventory[x]
-    end
+    'for i = 1, 50 do ' ..
+        'local x = (i % 15) + 1 ' ..
+        'local y = math.random(x, 15) ' ..
+        'current_inventory[x], current_inventory[y] = current_inventory[y], current_inventory[x] ' ..
+    'end ' ..
     --Store items
-    for i = 1, 15 do
-        if current_inventory[i] ~= nil then
-            player.components.inventory:GiveItem(current_inventory[i], i)
-        end
-    end
-    local chat_string = "Shuffle inventory"
-    net:Announce(chat_string)
+    'for i = 1, 15 do ' ..
+        'if current_inventory[i] ~= nil then player.components.inventory:GiveItem(current_inventory[i], i) end ' ..
+    'end'
+    SendCommand(fnstr)
+    --local chat_string = "Shuffle inventory"
+    --net:Announce(chat_string)
 end
 
+local function dropHandOverTime(rev)
+    if rev then
+        if event_holder ~= nil then
+            event_holder:Cancel()
+            event_holder = nil
+        end
+        return
+    end
+    event_holder = player:DoPeriodicTask(1.5, function()
+        if math.random() < 0.5 then
+            dropHand(nil)
+        end
+    end)
+end
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -325,30 +360,36 @@ end
 
 local function makeCold(rev)
     if rev then return end
-    player.components.temperature:SetTemperature(0)
-    local chat_string = "Cold"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.temperature:SetTemperature(0)'
+    SendCommand(fnstr)
+    --local chat_string = "Cold"
+    --net:Announce(chat_string)
 end
 
 local function makeHot(rev)
     if rev then return end
-    player.components.temperature:SetTemperature(50)
-    local chat_string = "Hot"
-    net:Announce(chat_string)
+    local fnstr = fn_player ..
+    'player.components.temperature:SetTemperature(50)'
+    SendCommand(fnstr)
+    --local chat_string = "Hot"
+    --net:Announce(chat_string)
 end
 
 local function makeWeak(rev)
-    if rev then player.components.combat.damagemultiplier = 1 return end
-    player.components.combat.damagemultiplier = 0.25
-    local chat_string = "Weak"
-    net:Announce(chat_string)
+    local fnstr = fn_player .. 'player.components.combat.damagemultiplier = '
+    if rev then fnstr = fnstr .. '1' else fnstr = fnstr .. '0.25' end
+    SendCommand(fnstr)
+    --local chat_string = "Weak"
+    --net:Announce(chat_string)
 end
 
 local function makeStrong(rev)
-    if rev then player.components.combat.damagemultiplier = 1 return end
-    player.components.combat.damagemultiplier = 2
-    local chat_string = "Strong"
-    net:Announce(chat_string)
+    local fnstr = fn_player .. 'player.components.combat.damagemultiplier = '
+    if rev then fnstr = fnstr .. '1' else fnstr = fnstr .. '2' end
+    SendCommand(fnstr)
+    --local chat_string = "Strong"
+    --net:Announce(chat_string)
 end
 
 local function healthRegen(rev)
@@ -360,9 +401,11 @@ local function healthRegen(rev)
         return
     end
     event_holder = player:DoPeriodicTask(1.5, function()
-        if player.components.health:GetPercent() < 1 then
-            player.components.health:SetPercent(player.components.health:GetPercent() + 0.02)
-        end
+        local fnstr = fn_player ..
+        'if player.components.health:GetPercent() < 1 then ' ..
+            'player.components.health:SetPercent(player.components.health:GetPercent() + 0.02) ' ..
+        'end'
+        SendCommand(fnstr)
     end)
 end
 
@@ -375,9 +418,11 @@ local function hungerRegen(rev)
         return
     end
     event_holder = player:DoPeriodicTask(1.5, function()
-        if player.components.hunger:GetPercent() < 1 then
-            player.components.hunger:SetPercent(player.components.hunger:GetPercent() + 0.02)
-        end
+        local fnstr = fn_player ..
+        'if player.components.hunger:GetPercent() < 1 then ' ..
+            'player.components.hunger:SetPercent(player.components.hunger:GetPercent() + 0.02) ' .. 
+        'end'
+        SendCommand(fnstr)
     end)
 end
 
@@ -390,9 +435,11 @@ local function sanityRegen(rev)
         return
     end
     event_holder = player:DoPeriodicTask(1.5, function()
-        if player.components.sanity:GetPercent() < 1 then
-            player.components.sanity:SetPercent(player.components.sanity:GetPercent() + 0.02)
-        end
+        local fnstr = fn_player ..
+        'if player.components.sanity:GetPercent() < 1 then ' ..
+            'player.components.sanity:SetPercent(player.components.sanity:GetPercent() + 0.02) ' ..
+        'end'
+        SendCommand(fnstr)
     end)
 end
 
@@ -405,12 +452,15 @@ local function poison(rev)
         return
     end
     event_holder = player:DoPeriodicTask(1.5, function()
-        if player.components.health:GetPercent() > 0.01 then
-            player.components.health:SetPercent(player.components.health:GetPercent() - 0.01)
-        end
+        local fnstr = fn_player ..
+        'if player.components.health:GetPercent() > 0.01 then ' ..
+            'player.components.health:SetPercent(player.components.health:GetPercent() - 0.01) ' ..
+        'end'
+        SendCommand(fnstr)
     end)
 end
 
+--Not working
 local function keepMoving(rev)
     if rev then
         if event_holder ~= nil then
@@ -421,24 +471,21 @@ local function keepMoving(rev)
         return
     end
     event_holder = player:DoPeriodicTask(0.01, function()
-        player.components.locomotor:RunInDirection(180 - GLOBAL.TheCamera:GetHeading())
+        local fnstr = fn_player ..
+        'player.components.locomotor:RunInDirection(180 - ' .. GLOBAL.TheCamera:GetHeading() .. ')'
     end)
 end
 
 local function speedup(rev)
-    if rev then
-        player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 1)
-        return
-    end
-    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 2)
+    local fnstr = fn_player .. 'player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", '
+    if rev then fnstr = fnstr .. '1)' else fnstr = fnstr .. '2)' end
+    SendCommand(fnstr)
 end
 
 local function slowdown(rev)
-    if rev then
-        player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 1)
-        return
-    end
-    player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", 0.5)
+    local fnstr = fn_player .. 'player.components.locomotor:SetExternalSpeedMultiplier(player, "myEventsSpeed", '
+    if rev then fnstr = fnstr .. '1)' else fnstr = fnstr .. '0.5)' end
+    SendCommand(fnstr)
 end
 
 --[[
@@ -449,15 +496,17 @@ end
 
 local function spawnLightning(rev)
     if rev then return end
-    TheWorld:PushEvent("ms_sendlightningstrike", ConsoleWorldPosition())
+    local fnstr = 'TheWorld:PushEvent("ms_sendlightningstrike", ConsoleWorldPosition())'
+    SendCommand(fnstr)
 end
 
 local function spawnMeteor(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("shadowmeteor")]
-    inst.Transform:SetPosition(x, y, z)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("shadowmeteor") ' ..
+    'inst.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
 local function rainingFrogs(rev)
@@ -473,27 +522,31 @@ local function rainingFrogs(rev)
         if n < 10 then
             return
         end
-        local x, y, z = player:GetPosition():Get()
-        local ents = GLOBAL.Ents
-        local inst = ents[TheSim:SpawnPrefab("frog")]
-        inst.sg:GoToState("fall")
-        inst.Transform:SetPosition(x + math.random(-15, 15), 35, z + math.random(-15, 15))
+        local fnstr = fn_player ..
+        'local x, y, z = player:GetPosition():Get() ' ..
+        'local inst = c_spawn("frog") ' ..
+        'inst.sg:GoToState("fall") ' ..
+        'inst.Transform:SetPosition(x + math.random(-15, 15), 35, z + math.random(-15, 15))'
+        SendCommand(fnstr)
     end)
 end
 
 local function rain(rev)
     if rev then return end
-    TheWorld:PushEvent("ms_forceprecipitation")
+    local fnstr = 'TheWorld:PushEvent("ms_forceprecipitation")'
+    SendCommand(fnstr)
 end
 
 local function nightFalls(rev)
     if rev then return end
-    TheWorld:PushEvent("ms_setphase", "night")
+    local fnstr = 'TheWorld:PushEvent("ms_setphase", "night")'
+    SendCommand(fnstr)
 end
 
 local function wakeUp(rev)
     if rev then return end
-    TheWorld:PushEvent("ms_nextcycle")
+    local fnstr = 'TheWorld:PushEvent("ms_nextcycle")'
+    SendCommand(fnstr)
 end
 
 local function tileChanger(rev)
@@ -528,119 +581,141 @@ end
 --player.Transform:SetPosition(x + 2, y, z)
 local function treePrison(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x+2, y, z)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x+1, y, z+1)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x, y, z+2)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x-1, y, z+1)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x-2, y, z)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x-1, y, z-1)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x, y, z-2)
-    inst = ents[TheSim:SpawnPrefab("evergreen_normal")]
-    inst.Transform:SetPosition(x+1, y, z-1)
+    --Maybe add axe
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x+2, y, z) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x+1, y, z+1) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x, y, z+2) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x-1, y, z+1) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x-2, y, z) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x-1, y, z-1) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x, y, z-2) ' ..
+    'inst = c_spawn("evergreen_normal") ' ..
+    'inst.Transform:SetPosition(x+1, y, z-1)'
+    SendCommand(fnstr)
 end
 
 local function spawnEvilFlowers(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = nil
-    for i = -2, 2 do
-        for j = -2, 2 do
-            inst = ents[TheSim:SpawnPrefab("flower_evil")]
-            inst.Transform:SetPosition(x+i*2, y, z+j*2)
-        end
-    end
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'for i = -2, 2 do ' ..
+        'for j = -2, 2 do ' ..
+            'local inst = c_spawn("flower_evil") ' ..
+            'inst.Transform:SetPosition(x+i*2, y, z+j*2) ' ..
+        'end ' ..
+    'end'
+    SendCommand(fnstr)
 end
 
 local function treesAttackClose(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("leif")]
-    inst.Transform:SetPosition(x, y, z)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("leif") ' ..
+    'inst.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
 local function treesAttackRange(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("deciduoustree")]
-    inst.Transform:SetPosition(x, y, z)
-    inst:StartMonster(true)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("deciduoustree") ' ..
+    'inst.Transform:SetPosition(x, y, z) ' ..
+    'inst:StartMonster(true)'
+    SendCommand(fnstr)
 end
 
 local function fruitFly(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("lordfruitfly")]
-    inst.Transform:SetPosition(x, y, z)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("lordfruitfly") ' ..
+    'inst.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
 local function spawnButterflies(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local n = math.random(20)
-    for i = 1, n do
-        local inst = ents[TheSim:SpawnPrefab("butterfly")]
-        inst.Transform:SetPosition(x + math.random(-15, 15), y, z + math.random(-15, 15))
-    end
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local n = math.random(20) ' ..
+    'for i = 1, n do ' ..
+        'local inst = c_spawn("butterfly") ' ..
+        'inst.Transform:SetPosition(x + math.random(-15, 15), y, z + math.random(-15, 15)) ' ..
+    'end'
+    SendCommand(fnstr)
 end
 
 local function spawnHounds(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local hounds = {"hound", "firehound", "icehound"}
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
-    inst.Transform:SetPosition(x + 10, y, z)
-    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
-    inst.Transform:SetPosition(x - 10, y, z)
-    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
-    inst.Transform:SetPosition(x, y, z + 10)
-    inst = ents[TheSim:SpawnPrefab(hounds[math.random(3)])]
-    inst.Transform:SetPosition(x, y, z - 10)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local hounds = {"hound", "firehound", "icehound"} ' ..
+    'local inst = c_spawn(hounds[math.random(3)]) ' ..
+    'inst.Transform:SetPosition(x + 10, y, z) ' ..
+    'local inst = c_spawn(hounds[math.random(3)]) ' ..
+    'inst.Transform:SetPosition(x - 10, y, z) ' ..
+    'local inst = c_spawn(hounds[math.random(3)]) ' ..
+    'inst.Transform:SetPosition(x, y, z + 10) ' ..
+    'local inst = c_spawn(hounds[math.random(3)]) ' ..
+    'inst.Transform:SetPosition(x, y, z - 10)'
+    SendCommand(fnstr)
 end
 
 local function spawnTentacles(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("tentacle")]
-    inst.Transform:SetPosition(x + 2, y, z)
-    inst = ents[TheSim:SpawnPrefab("tentacle")]
-    inst.Transform:SetPosition(x - 2, y, z)
-    inst = ents[TheSim:SpawnPrefab("tentacle")]
-    inst.Transform:SetPosition(x, y, z + 2)
-    inst = ents[TheSim:SpawnPrefab("tentacle")]
-    inst.Transform:SetPosition(x, y, z - 2)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("tentacle") ' ..
+    'inst.Transform:SetPosition(x + 2, y, z) ' ..
+    'local inst = c_spawn("tentacle") ' ..
+    'inst.Transform:SetPosition(x - 2, y, z) ' ..
+    'local inst = c_spawn("tentacle") ' ..
+    'inst.Transform:SetPosition(x, y, z + 2) ' ..
+    'local inst = c_spawn("tentacle") ' ..
+    'inst.Transform:SetPosition(x, y, z - 2)'
+    SendCommand(fnstr)
+    -- Maybe future feature -> change ground to MARSH
+    --[[
     x, y = TheWorld.Map:GetTileCoordsAtPoint(TheWorld.Map:GetTileCenterPoint(x, y, z))
     for i = -1, 1 do
         for j = -1, 1 do
-            --TODO Ošetrit ocean
+            --TODO If player on ocean
             TheWorld.Map:SetTile(x + i, y + j, 8)
         end
     end
+    --]]
 end
 
 local function spawnSheep(rev)
     if rev then return end
-    local x, y, z = player:GetPosition():Get()
-    local ents = GLOBAL.Ents
-    local inst = ents[TheSim:SpawnPrefab("spat")]
-    inst.Transform:SetPosition(x + 2, y, z)
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("spat") ' ..
+    'inst.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
 end
 
+local function spawnWarg(rev)
+    if rev then return end
+    local fnstr = fn_player ..
+    'local x, y, z = player:GetPosition():Get() ' ..
+    'local inst = c_spawn("warg") ' ..
+    'inst.Transform:SetPosition(x, y, z)'
+    SendCommand(fnstr)
+end
+
+-- TODO edit for caves version of mod
 local function bonusChest(rev)
     if rev then
         last_item:Remove()
@@ -672,44 +747,69 @@ end
 
 local function starterTools(rev)
     if rev then return end
-    givePlayerItem("axe")
-    givePlayerItem("pickaxe")
-    givePlayerItem("shovel")
-    givePlayerItem("farm_hoe")
-    givePlayerItem("spear")
+    local fnstr = fn_player ..
+    'local inst = c_spawn("axe") ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("pickaxe") ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("shovel") ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("farm_hoe") ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("spear") ' ..
+    'player.components.inventory:GiveItem(inst)'
+    SendCommand(fnstr)
 end
 
 local function shrooms(rev)
     if rev then return end
-    givePlayerItem("red_cap", 10)
-    givePlayerItem("green_cap", 10)
-    givePlayerItem("blue_cap", 10)
+    local fnstr = fn_player ..
+    'for i = 1, 10 do ' ..
+        'local inst = c_spawn("red_cap") ' ..
+        'player.components.inventory:GiveItem(inst) ' ..    
+        'inst = c_spawn("green_cap") ' ..
+        'player.components.inventory:GiveItem(inst) ' ..
+        'inst = c_spawn("blue_cap") ' ..
+        'player.components.inventory:GiveItem(inst) ' ..
+    'end'
+    SendCommand(fnstr)
 end
 
 local function fakeGoldTools(rev)
     if rev then return end
-    local inst = givePlayerItem("goldenaxe", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
-    inst = givePlayerItem("goldenpickaxe", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
-    inst = givePlayerItem("goldenshovel", 1)
-    if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end
+    local fnstr = fn_player ..
+    'local inst = c_spawn("goldenaxe") ' ..
+    'if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("goldenpickaxe") ' ..
+    'if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'inst = c_spawn("goldenshovel") ' ..
+    'if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end ' ..
+    'player.components.inventory:GiveItem(inst)'
+    SendCommand(fnstr)
 end
 
 local function nightVisionEffect(rev)
     if rev then
-        if last_item ~= nil then
-            last_item:Remove()
-            last_item = nil
-        end
+        local fnstr = fn_player ..
+        'if last_item ~= nil then ' ..
+            'last_item:Remove() ' ..
+            'last_item = nil ' ..
+        'else ' ..
+            'player.components.talker:Say("Neni to dobre") ' ..
+        'end'
+        SendCommand(fnstr)
         return
     end
-    local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
-    if curr_item ~= nil then
-        player.components.inventory:DropItem(curr_item)
-    end
-    last_item = givePlayerItem("molehat")
-    player.components.inventory:Equip(last_item)
+    local fnstr = fn_player ..
+    'local curr_item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD) ' ..
+    'if curr_item ~= nil then ' ..
+        'player.components.inventory:DropItem(curr_item) ' ..
+    'end ' ..
+    'last_item = c_spawn("molehat") ' ..
+    'player.components.inventory:Equip(last_item)'
+    SendCommand(fnstr)
 end
 
 --[[
@@ -727,9 +827,23 @@ local MagicEvents = Class(function (self)
     treePrison, treesAttackClose, treesAttackRange, spawnButterflies}
     --]==]
 
-    --TODO test
-    self.random_events = {shuffleInventory, teleportLag, tileChanger, speedup}
-    self.random_events_names = {"shuffleInventory", "teleportLag", "tileChanger", "speedup"}
+    -- Working:
+    -- GrowGiant, GrowTiny, hideCrafting, fullHealth, fullHunger, fullSanity, halfHealth, halfHunger, halfSanity, oneHealth, zeroHunger, zeroSanity,
+    -- speedup, slowdown, dropInventory, dropArmour, dropHand, dropHandOverTime
+    -- teleportLag, makeHot, makeCold, shuffleInventory, healthRegen, hungerRegen, sanityRegen, poison
+    -- spawnLightning, spawnMeteor, rainingFrogs, rain, nightFalls, wakeUp, tileChanger
+    -- spawnEvilFlowers, treePrison, fruitFly, treesAttackClose, treesAttackRange, spawnButterflies, spawnHounds
+    -- spawnSheep, spawnWarg, spawnTentacles, starterTools, fakeGoldTools, shrooms, nightVisionEffect
+
+    -- Working with restriction:
+    -- teleportRandom, teleportHermit, teleportSpawn
+
+    -- Not Working:
+    -- keepMoving
+    
+    self.random_events = {teleportRandom, speedup, slowdown, tileChanger, starterTools, fakeGoldTools, shrooms, nightVisionEffect}
+    self.random_events_names = {"teleportRandom", "speedup", "slowdown", "tileChanger", "starterTools", "fakeGoldTools", "shrooms", "nightVisionEffect"}
+    
     --[==[
     --TODO Change Names of events
     self.random_events_names = {"GrowGiant", "GrowTiny", "hideCrafting", --[[oneHealth,]] "halfHealth", "fullHealth", 
@@ -742,31 +856,7 @@ local MagicEvents = Class(function (self)
     self.curr_events_names = {}
 end)
 
---[=[
--- newline == medzere
-local random_events = {GrowGiant, GrowTiny, --[[oneHealth,]] halfHealth, fullHealth, 
---[[zeroSanity,]] halfSanity, fullSanity, --[[zeroHunger,]] halfHunger, fullHunger,
-treePrison, dropInventory, makeCold, makeHot, makeWeak, makeStrong}
-
-local random_events_names = {"GrowGiant", "GrowTiny", --[[oneHealth,]] "halfHealth", "fullHealth", 
---[[zeroSanity,]] "halfSanity", "fullSanity", --[[zeroHunger,]] "halfHunger", "fullHunger",
-"treePrison", "dropInventory", "makeCold", "makeHot", "makeWeak", "makeStrong"}
-]=]
-
 function MagicEvents:generate_random_event()
-    --TODO set 
-    --[=[
-    math.randomseed( os.time() )
-    local x = math.random(#self.random_events)
-    self.curr_events[1] = self.random_events[x]
-    self.curr_events_names[1] = self.random_events_names[x]
-    self.curr_events[2] = nil --So new event will be generated
-    while self.curr_events[1] == self.curr_events[2] or self.curr_events[2] == nil do
-        x = math.random(#self.random_events)
-        self.curr_events[2] = self.random_events[x]
-        self.curr_events_names[2] = self.random_events_names[x]
-    end
-    --]=]
     local numbers = generateRandomNumbers(#self.random_events, 4)
     for k, v in ipairs(numbers) do
         self.curr_events[k] = self.random_events[v]
@@ -775,27 +865,6 @@ function MagicEvents:generate_random_event()
 end
 
 function MagicEvents:execute_random_event(event_num)
-    --[[
-    if self.curr_events == nil or #self.curr_events == 0 then
-        player = GLOBAL.ThePlayer or GLOBAL.AllPlayers[1]
-        self.generate_random_event(self)
-        --net:Announce("1: " .. self.curr_events_names[1])
-        --net:Announce("2: " .. self.curr_events_names[2])
-        return self.curr_events_names
-    end
-    if player == nil then
-        print("Player == Nil")
-    end
-    if self.last_event ~= nil then
-        self.last_event("ret") -- Does not matter value, parameter just can't be nil
-    end
-    self.curr_events[event_num](nil) -- Execute_random_event
-    self.last_event = self.curr_events[event_num] -- Store last event
-    self.generate_random_event(self)
-    --net:Announce("1: " .. self.curr_events_names[1])
-    --net:Announce("2: " .. self.curr_events_names[2])
-    --]]
-
     player = GLOBAL.ThePlayer or GLOBAL.AllPlayers[1]
     if event_num ~= nil then
         if player == nil then
