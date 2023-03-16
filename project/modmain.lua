@@ -6,6 +6,22 @@ local Widget = require "widgets/widget"
 local TEMPLATES = require "widgets/templates"
 require "constants"
 
+
+local mod_config_options = {GetModConfigData("GrowGiant"), GetModConfigData("GrowTiny"), GetModConfigData("hideCrafting"),
+    GetModConfigData("fullHealth"), GetModConfigData("fullHunger"), GetModConfigData("fullSanity"), GetModConfigData("halfHealth"),
+    GetModConfigData("halfHunger"), GetModConfigData("halfSanity"), GetModConfigData("oneHealth"), GetModConfigData("zeroHunger"),
+    GetModConfigData("zeroSanity"), GetModConfigData("speedup"), GetModConfigData("slowdown"), GetModConfigData("dropInventory"),
+    GetModConfigData("dropArmour"), GetModConfigData("dropHand"), GetModConfigData("dropHandOverTime"), GetModConfigData("teleportLag"),
+    GetModConfigData("makeHot"), GetModConfigData("makeCold"), GetModConfigData("shuffleInventory"), GetModConfigData("healthRegen"),
+    GetModConfigData("hungerRegen"), GetModConfigData("sanityRegen"), GetModConfigData("poison"), GetModConfigData("spawnLightning"),
+    GetModConfigData("spawnMeteor"), GetModConfigData("rainingFrogs"), GetModConfigData("rain"), GetModConfigData("nightFalls"),
+    GetModConfigData("wakeUp"), GetModConfigData("tileChanger"), GetModConfigData("spawnEvilFlowers"), GetModConfigData("treePrison"),
+    GetModConfigData("fruitFly"), GetModConfigData("treesAttackClose"), GetModConfigData("treesAttackRange"), GetModConfigData("spawnButterflies"),
+    GetModConfigData("spawnHounds"), GetModConfigData("spawnSheep"), GetModConfigData("spawnWarg"), GetModConfigData("spawnTentacles"),
+    GetModConfigData("starterTools"), GetModConfigData("fakeGoldTools"), GetModConfigData("shrooms"), GetModConfigData("nightVisionEffect"),
+    GetModConfigData("spawnFirePit"), GetModConfigData("spawnIcePit"), GetModConfigData("ghostScreen"), GetModConfigData("teleportRandom"),
+    GetModConfigData("teleportHermit"), GetModConfigData("teleportSpawn")}
+
 --print("Hello world!")
 
 --local net = GLOBAL.TheNet
@@ -251,11 +267,14 @@ end
 AddPrefabPostInit("world", function (inst)
     inst:DoPeriodicTask(1, function ()
         --if used to get first set of effects
-        --[[
+        
         if loop_counter == 0 then
-            resolve_votes()
+            myevents:update_available_events(mod_config_options)
+            brain()
+            vote_counts = {}
+            vote_participants = {}
+            options = myevents:execute_random_event(nil)
         end
-        --]]
         brain()
         --update_button_text()
         loop_counter = loop_counter + 1
