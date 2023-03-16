@@ -130,8 +130,10 @@ local function teleportSpawn(rev)
     local fnstr = findPrefabsStr .. fn_player ..
     'local inst = findPrefabs("multiplayer_portal", 9001) ' ..
     'if inst == nil then inst = findPrefabs("multiplayer_portal_moonrock", 9001) end ' ..
-    'local x, y, z = inst.Transform:GetWorldPosition() ' ..
-    'player.Transform:SetPosition(x, y, z)'
+    'if inst ~= nil then ' ..
+        'local x, y, z = inst.Transform:GetWorldPosition() ' ..
+        'player.Transform:SetPosition(x, y, z) ' ..
+    'end'
     SendCommand(fnstr)
 end
 
@@ -162,8 +164,10 @@ local function teleportHermit(rev)
     if rev then return end
     local fnstr = findPrefabsStr .. fn_player .. 
     'local inst = findPrefabs("hermitcrab", 9001) ' ..
-    'local x, y, z = inst.Transform:GetWorldPosition() ' ..
-    'player.Transform:SetPosition(x, y, z)'
+    'if inst ~= nil then ' ..
+        'local x, y, z = inst.Transform:GetWorldPosition() ' ..
+        'player.Transform:SetPosition(x, y, z) ' ..
+    'end'
     SendCommand(fnstr)
 end
 

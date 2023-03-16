@@ -22,36 +22,40 @@ local mod_config_options = {GetModConfigData("GrowGiant"), GetModConfigData("Gro
     GetModConfigData("spawnFirePit"), GetModConfigData("spawnIcePit"), GetModConfigData("ghostScreen"), GetModConfigData("teleportRandom"),
     GetModConfigData("teleportHermit"), GetModConfigData("teleportSpawn")}
 
---print("Hello world!")
-
---local net = GLOBAL.TheNet
---local player = GLOBAL.AllPlayers[1]
+local debug_mode =  GetModConfigData("Debug Mode")
 
 --Variables
 local vote_counts = {}
 local vote_participants = {}
 local loop_counter = 0
-local option_window = {}
 local vote_option_widget = {}
 local options = {}
 local num_of_options = 4
 local transfer_file = "textak.txt"
 
---TMP functions
+--Debug mode funtions
 local function k()
-    options = myevents:execute_random_event(1)
+    if debug_mode then
+        options = myevents:execute_random_event(1)
+    end
 end
 
 local function l()
-    options = myevents:execute_random_event(2)
+    if debug_mode then
+        options = myevents:execute_random_event(2)
+    end
 end
 
 local function m()
-    options = myevents:execute_random_event(3)
+    if debug_mode then
+        options = myevents:execute_random_event(3)
+    end
 end
 
 local function n()
-    options = myevents:execute_random_event(4)
+    if debug_mode then
+        options = myevents:execute_random_event(4)
+    end
 end
 
 --vote counter
@@ -90,35 +94,8 @@ local function brain()
     end
 end
 
-local function update_button_text()
-    option_window[1]:SetText("1: " .. (options[1] or "Error") .. " " .. (vote_counts["1"] or "0"))
-    option_window[2]:SetText("2: " .. (options[2] or "Error") .. " " .. (vote_counts["2"] or "0"))
-end
-
-local function set_button_position(button, pos_x, pos_y)
-    local screensize = {GLOBAL.TheSim:GetScreenSize()}
-    local new_x = screensize[1] * (pos_x/1920)
-    local new_y = screensize[2] * (pos_y/1080)
-    button:SetPosition(new_x, new_y, 0)
-end
-
-local function button_create(text, x_pos, y_pos, x_scale, y_scale)
-    local new_button = ImageButton()
-
-    new_button:SetScale(x_scale, y_scale)
-
-    --new_button:SetPosition(x_pos, y_pos, 0)
-    set_button_position(new_button, x_pos, y_pos)
-
-    new_button:Show()
-
-    new_button:SetText(text)
-
-    return new_button
-end
 
 local function resolve_votes()
-    print("Resolve_votes")
 
     if #options == 0 then
         options = myevents:execute_random_event()
@@ -135,49 +112,18 @@ local function resolve_votes()
         end
     end
 
-    --[[
-    local vote_option = 1
-    if vote_counts["1"] == nil then
-        vote_option = 2
-    elseif vote_counts["2"] == nil then
-        vote_option = 1
-    elseif vote_counts["1"] > vote_counts["2"] then
-        vote_option = 1
-    else
-        vote_option = 2
-    end
-
-    --]]
-
     vote_counts = {}
     vote_participants = {}
 
-     --[[
-    if option_window[1] == nil then
-        option_window[1] = button_create("text", 1835, 800, 1, 1)
-    end
-    if option_window[2] == nil then
-        option_window[2] = button_create("text", 1835, 760, 1, 1)
-    end
-    ]]
-
     options = myevents:execute_random_event(vote_option)
-
-
-    --Button position is currenty stationary and visible in the right corner only when in full screen mode
-    --TODO change in future
-    --set_button_position(option_window[1], 1835, 800)
-    --set_button_position(option_window[2], 1835, 760)
-
-    --update_button_text()
-
 end
 
---for testing purposes, delete in future
+-- For testing purposes, works only in debug mode
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_HOME, k)
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_END, l)
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_PAGEUP, m)
 GLOBAL.TheInput:AddKeyDownHandler(GLOBAL.KEY_PAGEDOWN, n)
+
 
 local function VoteWidgetPosition(controls, screensize, pos)
     local hudscale = controls.top_root:GetScale()
@@ -266,19 +212,23 @@ end
 
 AddPrefabPostInit("world", function (inst)
     inst:DoPeriodicTask(1, function ()
+
         --if used to get first set of effects
-        
         if loop_counter == 0 then
             myevents:update_available_events(mod_config_options)
             brain()
             vote_counts = {}
             vote_participants = {}
             options = myevents:execute_random_event(nil)
+            loop_counter = 1
         end
         brain()
-        --update_button_text()
-        loop_counter = loop_counter + 1
-        if loop_counter == 100 then -- base counter = 11
+        
+        if not debug_mode then
+            loop_counter = loop_counter + 1
+        end
+
+        if loop_counter == 60 then
             resolve_votes()
             loop_counter = 1
         end

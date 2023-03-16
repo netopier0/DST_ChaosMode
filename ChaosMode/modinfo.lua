@@ -14,6 +14,15 @@ api_version = 10
 
 configuration_options = {
     {
+        name = "Debug Mode",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = false
+    },
+
+    {
         name = "GrowGiant",
         options = {
             {description = "On", data = true},
