@@ -23,6 +23,19 @@ configuration_options = {
     },
 
     {
+        name = "Timer",
+        options = {
+            {description = "30s", data = 30},
+            {description = "45s", data = 45},
+            {description = "60s", data = 60},
+            {description = "75s", data = 75},
+            {description = "90s", data = 90},
+            {description = "120s", data = 120},
+        },
+        default = 60
+    },
+
+    {
         name = "GrowGiant",
         options = {
             {description = "On", data = true},

@@ -23,7 +23,7 @@ local mod_config_options = {GetModConfigData("GrowGiant"), GetModConfigData("Gro
     GetModConfigData("teleportHermit"), GetModConfigData("teleportSpawn")}
 
 local debug_mode =  GetModConfigData("Debug Mode")
-
+local timer_length = GetModConfigData("Timer")
 --Variables
 local vote_counts = {}
 local vote_participants = {}
@@ -197,7 +197,7 @@ local function DisplayVotes(controls)
         controls.OnUpdate = function (self, dt)
             OnUpdate_base(self, dt)
 
-            local votesString = 100 - loop_counter
+            local votesString = timer_length - loop_counter
             controls.time_widget.button:SetText(votesString)
 
             local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
@@ -228,7 +228,7 @@ AddPrefabPostInit("world", function (inst)
             loop_counter = loop_counter + 1
         end
 
-        if loop_counter == 60 then
+        if loop_counter == timer_length then
             resolve_votes()
             loop_counter = 1
         end
