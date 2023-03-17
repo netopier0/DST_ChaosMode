@@ -46,17 +46,13 @@ def main():
                     name = comment.split("!", 1)[0][1:]
                     msg = comment.split(channel, 1)[1][2:]
             
+                    # Uncomment if you want to see messages that come through this script
                     #print(name, end=": ")
                     #print(msg[:-1])
 
                     text += name
                     text += ": "
-                    if len(msg) % 3 == 0:
-                        text += msg[:-1]
-                    elif len(msg) % 3 == 1:
-                        text += "1"
-                    else:
-                        text += "2"
+                    text += msg[:-1]
                     text += "\n"
 
                 ##Add to file
@@ -73,7 +69,7 @@ def main():
             
 
     except KeyboardInterrupt:
-        #print('Connection closed')
+        print('Connection closed')
         sleep(1)
         sock.close()
         
