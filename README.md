@@ -12,7 +12,7 @@ Chaos mode lets your viewers interact with your game. Every 60 seconds, the game
 After 60 seconds, the option with the most votes will happen and new events will be generated. Events such as changing in game stats, summoning entities, environmental effects, giving player items and more.
 # Dependencies
 
-- [Python 3](www.python.org)
+- [Python 3](https://www.python.org/)
 - [sockets package](https://pypi.org/project/sockets/)
 
 # Installation
