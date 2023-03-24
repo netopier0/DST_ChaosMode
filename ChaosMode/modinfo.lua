@@ -23,6 +23,16 @@ configuration_options = {
     },
 
     {
+        name = "Number of options",
+        options = {
+            {description = "2", data = 2},
+            {description = "3", data = 3},
+            {description = "4", data = 4},
+        },
+        default = 4
+    },
+
+    {
         name = "Timer",
         options = {
             {description = "30s", data = 30},
@@ -37,6 +47,7 @@ configuration_options = {
 
     {
         name = "GrowGiant",
+        label = "Giant",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -46,6 +57,7 @@ configuration_options = {
 
     {
         name = "GrowTiny",
+        label = "Tiny",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -55,6 +67,7 @@ configuration_options = {
 
     {
         name = "hideCrafting",
+        label = "No crafting",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -64,6 +77,7 @@ configuration_options = {
 
     {
         name = "fullHealth",
+        label = "Restore health",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -73,6 +87,7 @@ configuration_options = {
 
     {
         name = "fullHunger",
+        label = "Restore hunger",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -82,6 +97,7 @@ configuration_options = {
 
     {
         name = "fullSanity",
+        label = "Restore sanity",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -91,6 +107,7 @@ configuration_options = {
 
     {
         name = "halfHealth",
+        label = "Half health",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -100,6 +117,7 @@ configuration_options = {
 
     {
         name = "halfHunger",
+        label = "Half hunger",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -109,6 +127,7 @@ configuration_options = {
 
     {
         name = "halfSanity",
+        label = "Half sanity",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -118,6 +137,7 @@ configuration_options = {
 
     {
         name = "oneHealth",
+        label = "One health",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -127,6 +147,7 @@ configuration_options = {
 
     {
         name = "zeroHunger",
+        label = "Zero hunger",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -136,6 +157,7 @@ configuration_options = {
 
     {
         name = "zeroSanity",
+        label = "Zero sanity",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -145,6 +167,7 @@ configuration_options = {
 
     {
         name = "speedup",
+        label = "Speed",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -154,6 +177,7 @@ configuration_options = {
 
     {
         name = "slowdown",
+        label = "Slow",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -163,6 +187,7 @@ configuration_options = {
 
     {
         name = "dropInventory",
+        label = "Drop inventory",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -172,6 +197,7 @@ configuration_options = {
 
     {
         name = "dropArmour",
+        label = "Drop armour",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -181,6 +207,7 @@ configuration_options = {
 
     {
         name = "dropHand",
+        label = "Drop hand",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -190,6 +217,7 @@ configuration_options = {
 
     {
         name = "dropHandOverTime",
+        label = "Slippery hands",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -199,6 +227,7 @@ configuration_options = {
 
     {
         name = "teleportLag",
+        label = "Bad connection",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -208,6 +237,7 @@ configuration_options = {
 
     {
         name = "makeHot",
+        label = "Hot weather",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -217,6 +247,7 @@ configuration_options = {
 
     {
         name = "makeCold",
+        label = "Cold weather",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -226,6 +257,7 @@ configuration_options = {
 
     {
         name = "shuffleInventory",
+        label = "Inventory shuffle",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -235,6 +267,7 @@ configuration_options = {
 
     {
         name = "healthRegen",
+        label = "Health regeneration",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -244,6 +277,7 @@ configuration_options = {
 
     {
         name = "hungerRegen",
+        label = "Hunger regeneration",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -253,6 +287,7 @@ configuration_options = {
 
     {
         name = "sanityRegen",
+        label = "Sanity regeneration",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -262,6 +297,7 @@ configuration_options = {
 
     {
         name = "poison",
+        label = "Poison",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -271,6 +307,7 @@ configuration_options = {
 
     {
         name = "spawnLightning",
+        label = "Lightning",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -280,6 +317,7 @@ configuration_options = {
 
     {
         name = "spawnMeteor",
+        label = "Meteor",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -289,6 +327,7 @@ configuration_options = {
 
     {
         name = "rainingFrogs",
+        label = "Frog rain",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -298,6 +337,7 @@ configuration_options = {
 
     {
         name = "rain",
+        label = "Rain",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -307,6 +347,7 @@ configuration_options = {
 
     {
         name = "nightFalls",
+        label = "Night",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -316,6 +357,7 @@ configuration_options = {
 
     {
         name = "wakeUp",
+        label = "Morning",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -325,6 +367,7 @@ configuration_options = {
 
     {
         name = "tileChanger",
+        label = "Floor is changing",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -334,6 +377,7 @@ configuration_options = {
 
     {
         name = "spawnEvilFlowers",
+        label = "Evil flowers",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -343,6 +387,7 @@ configuration_options = {
 
     {
         name = "treePrison",
+        label = "Tree prison",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -352,6 +397,7 @@ configuration_options = {
 
     {
         name = "fruitFly",
+        label = "Fruit fly",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -361,6 +407,7 @@ configuration_options = {
 
     {
         name = "treesAttackClose",
+        label = "Trees attack (close)",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -370,6 +417,7 @@ configuration_options = {
 
     {
         name = "treesAttackRange",
+        label = "Trees attack (range)",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -379,6 +427,7 @@ configuration_options = {
 
     {
         name = "spawnButterflies",
+        label = "Butterflies",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -388,6 +437,7 @@ configuration_options = {
 
     {
         name = "spawnHounds",
+        label = "Hounds",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -397,6 +447,7 @@ configuration_options = {
 
     {
         name = "spawnSheep",
+        label = "Sheep",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -406,6 +457,7 @@ configuration_options = {
 
     {
         name = "spawnWarg",
+        label = "Warg",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -415,6 +467,7 @@ configuration_options = {
 
     {
         name = "spawnTentacles",
+        label = "Tentacles",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -424,6 +477,7 @@ configuration_options = {
 
     {
         name = "starterTools",
+        label = "Starter tools",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -433,6 +487,7 @@ configuration_options = {
 
     {
         name = "fakeGoldTools",
+        label = "Gold tools (fake)",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -442,6 +497,7 @@ configuration_options = {
 
     {
         name = "shrooms",
+        label = "Shrooms",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -451,6 +507,7 @@ configuration_options = {
 
     {
         name = "nightVisionEffect",
+        label = "Nightvision",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -460,6 +517,7 @@ configuration_options = {
 
     {
         name = "spawnFirePit",
+        label = "Firepit",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -469,6 +527,7 @@ configuration_options = {
 
     {
         name = "spawnIcePit",
+        label = "Icepit",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -478,6 +537,7 @@ configuration_options = {
 
     {
         name = "ghostScreen",
+        label = "Ghost vision",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -487,6 +547,7 @@ configuration_options = {
 
     {
         name = "teleportRandom",
+        label = "Random tp",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -496,6 +557,7 @@ configuration_options = {
 
     {
         name = "teleportHermit",
+        label = "Hermit tp",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -505,6 +567,7 @@ configuration_options = {
 
     {
         name = "teleportSpawn",
+        label = "Spawn tp",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},

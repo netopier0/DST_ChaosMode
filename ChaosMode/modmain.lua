@@ -30,7 +30,7 @@ local vote_participants = {}
 local loop_counter = 0
 local vote_option_widget = {}
 local options = {}
-local num_of_options = 4
+local num_of_options = GetModConfigData("Number of options")
 local transfer_file = "textak.txt"
 
 --Debug mode funtions
@@ -47,13 +47,13 @@ local function l()
 end
 
 local function m()
-    if debug_mode then
+    if debug_mode and num_of_options >= 3 then
         options = myevents:execute_random_event(3)
     end
 end
 
 local function n()
-    if debug_mode then
+    if debug_mode and num_of_options >= 4 then
         options = myevents:execute_random_event(4)
     end
 end
@@ -139,7 +139,7 @@ local function VoteWidgetPosition(controls, screensize, pos)
     controls.vote_widget[pos]:SetPosition(position_x, position_y, 0)
 end
 
-local function CountdownWidgetPosition(controls, screensize)
+local function CountdownWidgetPosition(controls, screensize, pos)
     local hudscale = controls.top_root:GetScale()
     local screen_w_full, screen_h_full = GLOBAL.unpack(screensize)
     local screen_w = screen_w_full/hudscale.x
@@ -148,7 +148,7 @@ local function CountdownWidgetPosition(controls, screensize)
     local position_x = (-1 * controls.time_widget.coordssize.w / 2)
         + (1 * screen_w / 2) + (-1 * 150)
     local position_y = (-1 * controls.time_widget.coordssize.h / 2)
-        + (0 * screen_h / 2) + (-1 * -40) + (-1 * 50 * 5)
+        + (0 * screen_h / 2) + (-1 * -40) + (-1 * 50 * (pos + 1))
 
     controls.time_widget:SetPosition(position_x, position_y, 0)
 end
@@ -191,7 +191,7 @@ local function DisplayVotes(controls)
 
         controls.time_widget  = controls.top_root:AddChild(VoteWidget(1))
         local screensize = {GLOBAL.TheSim:GetScreenSize()}
-        CountdownWidgetPosition(controls, screensize)
+        CountdownWidgetPosition(controls, screensize, num_of_options)
 
         local OnUpdate_base = controls.OnUpdate
         controls.OnUpdate = function (self, dt)
@@ -202,7 +202,7 @@ local function DisplayVotes(controls)
 
             local curscreensize = {GLOBAL.TheSim:GetScreenSize()}
             if curscreensize[1] ~= screensize[1] or curscreensize[2] ~= screensize[2] then
-                CountdownWidgetPosition(controls, curscreensize)
+                CountdownWidgetPosition(controls, curscreensize, num_of_options)
                 screensize = curscreensize
             end
         end
@@ -215,6 +215,7 @@ AddPrefabPostInit("world", function (inst)
 
         --if used to get first set of effects
         if loop_counter == 0 then
+            myevents:update_numer_of_events(num_of_options)
             myevents:update_available_events(mod_config_options)
             brain()
             vote_counts = {}

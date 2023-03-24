@@ -873,9 +873,8 @@ local MagicEvents = Class(function (self)
     -- Not Working:
     -- keepMoving
     
-    -- TODO test pits
     self.random_events = {teleportRandom, speedup, slowdown, tileChanger}
-    self.random_events_names = {"teleportRandom", "speedup", "slowdown", "tileChanger"}
+    self.random_events_names = {"Random tp", "Speed", "Slow", "Floor is changing"}
 
     self.all_events = {GrowGiant, GrowTiny, hideCrafting, fullHealth, fullHunger, fullSanity, halfHealth, halfHunger,
         halfSanity, oneHealth, zeroHunger, zeroSanity, speedup, slowdown, dropInventory, dropArmour, dropHand,
@@ -884,14 +883,15 @@ local MagicEvents = Class(function (self)
         treePrison, fruitFly, treesAttackClose, treesAttackRange, spawnButterflies, spawnHounds, spawnSheep, spawnWarg,
         spawnTentacles, starterTools, fakeGoldTools, shrooms, nightVisionEffect, spawnFirePit, spawnIcePit, ghostScreen,
         teleportRandom, teleportHermit, teleportSpawn}
-    self.all_events_names = {"GrowGiant", "GrowTiny", "hideCrafting", "fullHealth", "fullHunger", "fullSanity", "halfHealth", "halfHunger",
-        "halfSanity", "oneHealth", "zeroHunger", "zeroSanity", "speedup", "slowdown", "dropInventory", "dropArmour", "dropHand",
-        "dropHandOverTime", "teleportLag", "makeHot", "makeCold", "shuffleInventory", "healthRegen", "hungerRegen", "sanityRegen",
-        "poison", "spawnLightning", "spawnMeteor", "rainingFrogs", "rain", "nightFalls", "wakeUp", "tileChanger", "spawnEvilFlowers",
-        "treePrison", "fruitFly", "treesAttackClose", "treesAttackRange", "spawnButterflies", "spawnHounds", "spawnSheep", "spawnWarg",
-        "spawnTentacles", "starterTools", "fakeGoldTools", "shrooms", "nightVisionEffect", "spawnFirePit", "spawnIcePit", "ghostScreen",
-        "teleportRandom", "teleportHermit", "teleportSpawn"}
+    self.all_events_names = {"Giant", "Tiny", "No crafting", "Restore health", "Restore hunger", "Restore sanity", "Half health",
+        "Half hunger", "Half sanity", "One health", "Zero hunger", "Zero sanity", "Speed", "Slow", "Drop inventory", "Drop armour",
+        "Drop hand", "Slippery hands", "Bad connection", "Hot weather", "Cold weather", "Inventory shuffle", "Health regeneration",
+        "Hunger regeneration", "Sanity regeneration", "Poison", "Lightning", "Meteor", "Frog rain", "Rain", "Night", "Morning",
+        "Floor is changing", "Evil flowers", "Tree prison", "Fruit fly", "Trees attack (close)", "Trees attack (range)", "Butterflies",
+        "Hounds", "Sheep", "Warg", "Tentacles", "Starter tools", "Gold tools (fake)", "Shrooms", "Nightvision", "Firepit", "Icepit",
+        "Ghost vision", "Random tp", "Hermit tp", "Spawn tp"}
         
+    self.number_of_options = 4
     self.last_event = nil
     self.curr_events = {}
     self.curr_events_names = {}
@@ -906,14 +906,18 @@ function MagicEvents:update_available_events(event_status)
             self.random_events_names[#self.random_events_names + 1] = self.all_events_names[i]
         end
     end
-    if #self.random_events < 4 then
+    if #self.random_events < self.number_of_options then
         self.random_events = {teleportRandom, speedup, slowdown, tileChanger}
         self.random_events_names = {"teleportRandom", "speedup", "slowdown", "tileChanger"}
     end
 end
 
+function MagicEvents:update_numer_of_events(n)
+    self.number_of_options = n
+end
+
 function MagicEvents:generate_random_event()
-    local numbers = generateRandomNumbers(#self.random_events, 4)
+    local numbers = generateRandomNumbers(#self.random_events, self.number_of_options)
     for k, v in ipairs(numbers) do
         self.curr_events[k] = self.random_events[v]
         self.curr_events_names[k] = self.random_events_names[v]

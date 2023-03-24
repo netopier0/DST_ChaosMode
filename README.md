@@ -2,6 +2,11 @@
 
 Mod for the game Don't Starve Together that allows your viewers to mess with your game while playing.
 
+# Warning
+
+Event that teleport player currently don't work with lag compensation: predictive.
+This includes Bad connection, Random tp, Hermit tp, Spawn tp.
+
 # Description
 Chaos mode lets your viewers interact with your game. Every 60 seconds, the game will generate a set of events. Then your viewers can vote in chat for what option they want to happen. 
 After 60 seconds, the option with the most votes will happen and new events will be generated. Events such as changing in game stats, summoning entities, environmental effects, giving player items and more.
