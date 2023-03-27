@@ -77,14 +77,10 @@ local function brain()
             if pos_of_semicolom ~= nil and #line == pos_of_semicolom + 2 then
                 local current_participant = line:sub(1, pos_of_semicolom-1)
                 local current_vote = line:sub(pos_of_semicolom + 2, pos_of_semicolom + 2)
-                if vote_participants[current_participant] == nil then
+                if vote_participants[current_participant] == nil and vote_counts[current_vote] ~= nil then
                     vote_participants[current_participant] = current_vote
-                    print(current_participant, current_vote)
-                    if vote_counts[current_vote] == nil then
-                        vote_counts[current_vote] = 1
-                    else
-                        vote_counts[current_vote] = vote_counts[current_vote] + 1
-                    end
+                    --print(current_participant, current_vote)
+                    vote_counts[current_vote] = vote_counts[current_vote] + 1
                 end
             end
         end
@@ -94,6 +90,12 @@ local function brain()
     end
 end
 
+local function generateVoteOptions()
+    vote_counts = {}
+    for i = 1, num_of_options do
+        vote_counts[tostring(i)] = 0
+    end
+end
 
 local function resolve_votes()
 
@@ -112,7 +114,7 @@ local function resolve_votes()
         end
     end
 
-    vote_counts = {}
+    generateVoteOptions()
     vote_participants = {}
 
     options = myevents:execute_random_event(vote_option)
@@ -218,7 +220,7 @@ AddPrefabPostInit("world", function (inst)
             myevents:update_numer_of_events(num_of_options)
             myevents:update_available_events(mod_config_options)
             brain()
-            vote_counts = {}
+            generateVoteOptions()
             vote_participants = {}
             options = myevents:execute_random_event(nil)
             loop_counter = 1
