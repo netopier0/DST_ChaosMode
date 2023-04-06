@@ -32,6 +32,7 @@ local vote_option_widget = {}
 local options = {}
 local num_of_options = GetModConfigData("Number of options")
 local transfer_file = "textak.txt"
+local channel = ""
 
 --Debug mode funtions
 local function k()
@@ -58,36 +59,58 @@ local function n()
     end
 end
 
+local function getChannel()
+    TheSim:QueryServer(
+        "http://127.0.0.1:8080/channel",
+        function(result, is_successful, http_code)
+            if is_successful and http_code == 200 then
+                channel = result
+            end
+        end,
+        "GET"
+    )
+end
+
 --vote counter
 --expects data in format:
 --[identifier]: [vote]
 
 local function brain()
-    if io ~= nil then
-        local open = io.open
-        local file = open(transfer_file, "r")
-
-        if not file then return nil end
-
-        local lines = file:lines()
-
-        for line in lines do
-            line = line:gsub("[\n\r\t]", "")
-            local pos_of_semicolom = string.find(line, ":")
-            if pos_of_semicolom ~= nil and #line == pos_of_semicolom + 2 then
-                local current_participant = line:sub(1, pos_of_semicolom-1)
-                local current_vote = line:sub(pos_of_semicolom + 2, pos_of_semicolom + 2)
-                if vote_participants[current_participant] == nil and vote_counts[current_vote] ~= nil then
-                    vote_participants[current_participant] = current_vote
-                    --print(current_participant, current_vote)
-                    vote_counts[current_vote] = vote_counts[current_vote] + 1
+    --TODO rewrite
+    local lines = ""
+    TheSim:QueryServer(
+        "http://127.0.0.1:8080/" .. channel .. "/chat",
+        function(result, is_successful, http_code)
+            if is_successful and http_code == 200 then
+                if result ~= "None" then
+                    -- Does vote counting
+                    for line in string.gmatch(result,'[^\r\n]+') do
+                        line = line:gsub("[\n\r\t]", "")
+                        local pos_of_semicolom = string.find(line, ":")
+                        if pos_of_semicolom ~= nil and #line == pos_of_semicolom + 2 then
+                            local current_participant = line:sub(1, pos_of_semicolom-1)
+                            local current_vote = line:sub(pos_of_semicolom + 2, pos_of_semicolom + 2)
+                            if vote_participants[current_participant] == nil and vote_counts[current_vote] ~= nil then
+                                vote_participants[current_participant] = current_vote
+                                --print(current_participant, current_vote)
+                                vote_counts[current_vote] = vote_counts[current_vote] + 1
+                            end
+                        end
+                    end
                 end
             end
-        end
+        end,
+        "GET"
+    )
 
-        file:close()
-        open(transfer_file, "w"):close()
-    end
+    TheSim:QueryServer(
+        "http://127.0.0.1:8080/" .. channel .. "/chat/delete",
+        function(result, is_successful, http_code)
+            if is_successful and http_code == 200 then end
+        end,
+        "GET"
+    )
+
 end
 
 local function generateVoteOptions()
@@ -219,14 +242,22 @@ AddPrefabPostInit("world", function (inst)
         if loop_counter == 0 then
             myevents:update_numer_of_events(num_of_options)
             myevents:update_available_events(mod_config_options)
-            brain()
+            getChannel()
+            if channel ~= "" then
+                brain()
+            end
             generateVoteOptions()
             vote_participants = {}
             options = myevents:execute_random_event(nil)
             loop_counter = 1
         end
-        brain()
         
+        if channel == "" then
+            getChannel()
+        else
+            brain()
+        end
+
         if not debug_mode then
             loop_counter = loop_counter + 1
         end
