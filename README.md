@@ -20,9 +20,12 @@ After 60 seconds, the option with the most votes will happen and new events will
 
 # Youtube
 
-Future feature
+1. Download this github repository
+2. Add ChaosMode to your DST mod file (something like ..\steamapps\common\Don't Starve Together\mods)
+3. Run youtube.exe
 
 # Afterword
 
 In case you come across anything that is not working or some event that you want to add, let me know. I tested this mode but there may still be some bugs. 
-File twitch_communication_plus_server.py have same code as twitch.exe but without secrets, you can check it if you want.
+File twitch_communication_plus_server.py/youtube_communication_plus_server.py have same code as twitch.exe/youtube.exe but without secrets, you can check it if you want. 
+You can also run python code by yourself but you need some libaries and also secret for twitch (you cen get your secret here https://twitchapps.com/tmi/).
