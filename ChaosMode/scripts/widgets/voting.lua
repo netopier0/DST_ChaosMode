@@ -17,7 +17,7 @@ local VoteButtonWidget = Class(Widget, function (self, mapscale)
 
     self.button:SetScale(1, 1, 1)
     self.button:SetText("My Vote Button")
-    self.button:SetTextSize(30)
+    self.button:SetTextSize(25)
     self.button:SetClickable(false)
     self.button:Show()
 end)

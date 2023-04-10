@@ -531,7 +531,7 @@ local function rainingFrogs(rev)
     end
     event_holder = player:DoPeriodicTask(0.33, function()
         local n = math.random(20)
-        if n < 10 then
+        if n < 15 then
             return
         end
         local fnstr = fn_player ..
