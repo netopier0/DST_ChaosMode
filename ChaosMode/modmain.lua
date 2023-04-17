@@ -11,16 +11,16 @@ local mod_config_options = {GetModConfigData("GrowGiant"), GetModConfigData("Gro
     GetModConfigData("fullHealth"), GetModConfigData("fullHunger"), GetModConfigData("fullSanity"), GetModConfigData("halfHealth"),
     GetModConfigData("halfHunger"), GetModConfigData("halfSanity"), GetModConfigData("oneHealth"), GetModConfigData("zeroHunger"),
     GetModConfigData("zeroSanity"), GetModConfigData("speedup"), GetModConfigData("slowdown"), GetModConfigData("dropInventory"),
-    GetModConfigData("dropArmour"), GetModConfigData("dropHand"), GetModConfigData("dropHandOverTime"), GetModConfigData("teleportLag"),
+    GetModConfigData("dropArmour"), GetModConfigData("dropHand"), GetModConfigData("dropHandOverTime"), GetModConfigData("rotAll"), GetModConfigData("teleportLag"),
     GetModConfigData("makeHot"), GetModConfigData("makeCold"), GetModConfigData("shuffleInventory"), GetModConfigData("healthRegen"),
     GetModConfigData("hungerRegen"), GetModConfigData("sanityRegen"), GetModConfigData("poison"), GetModConfigData("spawnLightning"),
     GetModConfigData("spawnMeteor"), GetModConfigData("rainingFrogs"), GetModConfigData("rain"), GetModConfigData("nightFalls"),
     GetModConfigData("wakeUp"), GetModConfigData("tileChanger"), GetModConfigData("spawnEvilFlowers"), GetModConfigData("treePrison"),
     GetModConfigData("fruitFly"), GetModConfigData("treesAttackClose"), GetModConfigData("treesAttackRange"), GetModConfigData("spawnButterflies"),
     GetModConfigData("spawnHounds"), GetModConfigData("spawnSheep"), GetModConfigData("spawnWarg"), GetModConfigData("spawnTentacles"),
-    GetModConfigData("starterTools"), GetModConfigData("fakeGoldTools"), GetModConfigData("shrooms"), GetModConfigData("nightVisionEffect"),
-    GetModConfigData("spawnFirePit"), GetModConfigData("spawnIcePit"), GetModConfigData("ghostScreen"), GetModConfigData("teleportRandom"),
-    GetModConfigData("teleportHermit"), GetModConfigData("teleportSpawn")}
+    GetModConfigData("starterTools"), GetModConfigData("fakeGoldTools"), GetModConfigData("realGoldTools"), GetModConfigData("shrooms"),
+    GetModConfigData("nightVisionEffect"), GetModConfigData("wonkeyCurse"), GetModConfigData("spawnFirePit"), GetModConfigData("spawnIcePit"), 
+    GetModConfigData("ghostScreen"), GetModConfigData("goggleScreen"), GetModConfigData("moonStorm"), GetModConfigData("teleportRandom"), GetModConfigData("teleportHermit"), GetModConfigData("teleportSpawn")}
 
 local debug_mode =  GetModConfigData("Debug Mode")
 local timer_length = GetModConfigData("Timer")
@@ -60,6 +60,7 @@ local function n()
 end
 
 local function getChannel()
+    if debug_mode then return end
     TheSim:QueryServer(
         "http://127.0.0.1:8080/channel",
         function(result, is_successful, http_code)
@@ -77,6 +78,7 @@ end
 
 local function brain()
     --TODO rewrite
+    if debug_mode then return end
     local lines = ""
     TheSim:QueryServer(
         "http://127.0.0.1:8080/" .. channel .. "/chat",

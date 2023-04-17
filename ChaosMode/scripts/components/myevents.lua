@@ -100,6 +100,24 @@ local function ghostScreen(rev)
     player.components.playervision:SetGhostVision(true)
 end
 
+local function goggleScreen(rev)
+    if rev then
+        player.components.playervision:ForceGoggleVision(false)
+        return
+    end 
+    player.components.playervision:ForceGoggleVision(true)
+end
+
+local function moonStorm(rev)
+    if rev then
+        local fnstr = 'TheWorld:PushEvent("ms_stopthemoonstorms")'
+        SendCommand(fnstr)
+        return
+    end
+    local fnstr = 'TheWorld:PushEvent("ms_startthemoonstorms")'
+    SendCommand(fnstr)
+end
+
 
 --[[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,6 +379,28 @@ local function dropHandOverTime(rev)
             dropHand(nil)
         end
     end)
+end
+
+local function rotAll(rev)
+    if rev then return end
+    local fnstr = fn_player ..
+    'for i = 1, 15 do ' ..
+        'local item = player.components.inventory.itemslots[i] ' ..
+        'if item ~= nil then ' ..
+            'if item:HasTag("fresh") or item:HasTag("stale") or item:HasTag("spoiled") then ' ..
+                'local size = 1 ' ..
+                'if item.components.stackable ~= nil then ' ..
+                    'size = item.components.stackable:StackSize() ' ..
+                'end ' ..
+                'player.components.inventory:RemoveItemBySlot(i) ' ..
+                'for j = 1, size do ' ..
+                    'local inst = c_spawn("spoiled_food") ' ..
+                    'player.components.inventory:GiveItem(inst, i) ' ..
+                'end ' ..
+            'end ' ..
+        'end ' ..
+    'end'
+    SendCommand(fnstr)
 end
 
 --[[
@@ -826,6 +866,19 @@ local function fakeGoldTools(rev)
     'if inst ~= nil then inst.components.finiteuses:SetUses(0.25) end ' ..
     'player.components.inventory:GiveItem(inst)'
     SendCommand(fnstr)
+    return "Gold tools"
+end
+
+local function realGoldTools(rev)
+    if rev then return end
+    local fnstr = fn_player ..
+    'local tools = {"goldenaxe", "goldenpickaxe", "goldenshovel"} ' ..
+    'local inst = c_spawn(tools[math.random(3)]) ' ..
+    'player.components.inventory:GiveItem(inst) ' ..
+    'local inst = c_spawn(tools[math.random(3)]) ' ..
+    'player.components.inventory:GiveItem(inst)'
+    SendCommand(fnstr)
+    return "Gold tools"
 end
 
 local function nightVisionEffect(rev)
@@ -847,6 +900,25 @@ local function nightVisionEffect(rev)
     'end ' ..
     'last_item = c_spawn("molehat") ' ..
     'player.components.inventory:Equip(last_item)'
+    SendCommand(fnstr)
+end
+
+local function wonkeyCurse(rev)
+    if rev then
+        local fnstr = fn_player ..
+        'for i = 1, 15 do ' ..
+            'player.components.inventory:RemoveItemBySlot(i) ' ..
+        'end ' ..
+        'player.components.cursable:RemoveCurse("MONKEY", 150, false)'
+        SendCommand(fnstr)
+        return
+    end
+    local fnstr = fn_player ..
+    'player.components.inventory:DropEverything() ' ..
+    'for i = 1, 150 do ' ..
+        'local inst = c_spawn("cursed_monkey_token") ' ..
+        'player.components.inventory:GiveItem(inst) ' .. 
+    'end'
     SendCommand(fnstr)
 end
 
@@ -878,18 +950,18 @@ local MagicEvents = Class(function (self)
 
     self.all_events = {GrowGiant, GrowTiny, hideCrafting, fullHealth, fullHunger, fullSanity, halfHealth, halfHunger,
         halfSanity, oneHealth, zeroHunger, zeroSanity, speedup, slowdown, dropInventory, dropArmour, dropHand,
-        dropHandOverTime, teleportLag, makeHot, makeCold, shuffleInventory, healthRegen, hungerRegen, sanityRegen,
+        dropHandOverTime, rotAll, teleportLag, makeHot, makeCold, shuffleInventory, healthRegen, hungerRegen, sanityRegen,
         poison, spawnLightning, spawnMeteor, rainingFrogs, rain, nightFalls, wakeUp, tileChanger, spawnEvilFlowers,
         treePrison, fruitFly, treesAttackClose, treesAttackRange, spawnButterflies, spawnHounds, spawnSheep, spawnWarg,
-        spawnTentacles, starterTools, fakeGoldTools, shrooms, nightVisionEffect, spawnFirePit, spawnIcePit, ghostScreen,
-        teleportRandom, teleportHermit, teleportSpawn}
+        spawnTentacles, starterTools, fakeGoldTools, realGoldTools, shrooms, nightVisionEffect, wonkeyCurse, spawnFirePit,
+        spawnIcePit, ghostScreen, goggleScreen, moonStorm, teleportRandom, teleportHermit, teleportSpawn}
     self.all_events_names = {"Giant", "Tiny", "No crafting", "Restore health", "Restore hunger", "Restore sanity", "Half health",
         "Half hunger", "Half sanity", "One health", "Zero hunger", "Zero sanity", "Speed", "Slow", "Drop inventory", "Drop armour",
-        "Drop hand", "Slippery hands", "Bad connection", "Hot weather", "Cold weather", "Inventory shuffle", "Health regeneration",
+        "Drop hand", "Slippery hands", "Rot everything", "Bad connection", "Hot weather", "Cold weather", "Inventory shuffle", "Health regeneration",
         "Hunger regeneration", "Sanity regeneration", "Poison", "Lightning", "Meteor", "Frog rain", "Rain", "Night", "Morning",
         "Floor is changing", "Evil flowers", "Tree prison", "Fruit fly", "Trees attack (close)", "Trees attack (range)", "Butterflies",
-        "Hounds", "Sheep", "Warg", "Tentacles", "Starter tools", "Gold tools (fake)", "Shrooms", "Nightvision", "Firepit", "Icepit",
-        "Ghost vision", "Random tp", "Hermit tp", "Spawn tp"}
+        "Hounds", "Sheep", "Warg", "Tentacles", "Starter tools", "Gold tools (fake)", "Gold tools (real)", "Shrooms", "Nightvision",
+        "Wonkey curse", "Firepit", "Icepit", "Ghost vision", "Goggles vision", "Moonstorm", "Random tp", "Hermit tp", "Spawn tp"}
         
     self.number_of_options = 4
     self.last_event = nil
@@ -932,7 +1004,10 @@ function MagicEvents:execute_random_event(event_num)
         end
         if player ~= nil then
             if self.last_event ~= nil then self.last_event("ret") end --Does not matter value, parameter just can't be nil
-            self.curr_events[event_num](nil) -- Execute chosen event
+            local event_text = self.curr_events[event_num](nil) -- Execute chosen event
+            event_text = event_text or self.curr_events_names[event_num]
+            --SendCommand(fn_player .. 'player.components.talker:Say("' .. event_text .. '")')
+            TheNet:Say(event_text) -- Announce current event
             self.last_event = self.curr_events[event_num] -- Store last event
         end
     end

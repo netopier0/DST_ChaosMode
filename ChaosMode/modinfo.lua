@@ -226,6 +226,16 @@ configuration_options = {
     },
 
     {
+        name = "rotAll",
+        label = "Rot everything",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = true
+    },
+
+    {
         name = "teleportLag",
         label = "Bad connection",
         options = {
@@ -496,6 +506,16 @@ configuration_options = {
     },
 
     {
+        name = "realGoldTools",
+        label = "Gold tools (real)",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = true
+    },
+
+    {
         name = "shrooms",
         label = "Shrooms",
         options = {
@@ -508,6 +528,16 @@ configuration_options = {
     {
         name = "nightVisionEffect",
         label = "Nightvision",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = true
+    },
+
+    {
+        name = "wonkeyCurse",
+        label = "Wonkey curse",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
@@ -538,6 +568,26 @@ configuration_options = {
     {
         name = "ghostScreen",
         label = "Ghost vision",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = true
+    },
+
+    {
+        name = "goggleScreen",
+        label = "Goggles vision",
+        options = {
+            {description = "On", data = true},
+            {description = "Off", data = false},
+        },
+        default = false
+    },
+
+    {
+        name = "moonStorm",
+        label = "Moonstorm",
         options = {
             {description = "On", data = true},
             {description = "Off", data = false},
