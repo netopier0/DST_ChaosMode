@@ -31,6 +31,7 @@ local loop_counter = 0
 local vote_option_widget = {}
 local options = {}
 local num_of_options = GetModConfigData("Number of options")
+local duration_time = GetModConfigData("Duration of event")
 local transfer_file = "textak.txt"
 local channel = ""
 
@@ -262,6 +263,10 @@ AddPrefabPostInit("world", function (inst)
 
         if not debug_mode then
             loop_counter = loop_counter + 1
+        end
+
+        if loop_counter == duration_time then
+            myevents:revert_last_event()
         end
 
         if loop_counter == timer_length then

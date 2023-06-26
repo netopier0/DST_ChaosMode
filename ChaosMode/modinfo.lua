@@ -41,6 +41,30 @@ configuration_options = {
             {description = "75s", data = 75},
             {description = "90s", data = 90},
             {description = "120s", data = 120},
+            {description = "5m", data = 300},
+            {description = "10m", data = 600},
+            {description = "15m", data = 900},
+            {description = "20m", data = 1200},
+            {description = "30m", data = 1800},
+        },
+        default = 60
+    },
+
+    {
+        name = "Duration of event",
+        options = {
+            {description = "15s", data = 15},
+            {description = "30s", data = 30},
+            {description = "45s", data = 45},
+            {description = "60s", data = 60},
+            {description = "75s", data = 75},
+            {description = "90s", data = 90},
+            {description = "120s", data = 120},
+            {description = "5m", data = 300},
+            {description = "10m", data = 600},
+            {description = "15m", data = 900},
+            {description = "20m", data = 1200},
+            {description = "30m", data = 1800},
         },
         default = 60
     },

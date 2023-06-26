@@ -1000,10 +1000,9 @@ function MagicEvents:execute_random_event(event_num)
     player = GLOBAL.ThePlayer or GLOBAL.AllPlayers[1]
     if event_num ~= nil then
         if player == nil then
-            print("Player == nil")
+            print("Player == nil in execute_random_event")
         end
         if player ~= nil then
-            if self.last_event ~= nil then self.last_event("ret") end --Does not matter value, parameter just can't be nil
             local event_text = self.curr_events[event_num](nil) -- Execute chosen event
             event_text = event_text or self.curr_events_names[event_num]
             --SendCommand(fn_player .. 'player.components.talker:Say("' .. event_text .. '")')
@@ -1013,6 +1012,15 @@ function MagicEvents:execute_random_event(event_num)
     end
     self.generate_random_event(self)
     return self.curr_events_names
+end
+
+function MagicEvents:revert_last_event()
+    if player == nil then
+        print("Player == nil in revert_last_event")
+    end
+    if player ~= nil then
+        if self.last_event ~= nil then self.last_event("ret") end --Does not matter value, parameter just can't be nil
+    end
 end
 
 return MagicEvents()
